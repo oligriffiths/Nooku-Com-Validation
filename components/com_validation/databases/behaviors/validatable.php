@@ -7,11 +7,23 @@
 
 class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 {
+	/**
+	 * @var array
+	 */
 	protected $_constraints_db = array();
+	/**
+	 * @var array
+	 */
 	protected $_constraints = array();
+	/**
+	 * @var array
+	 */
 	protected $_errors = array();
 
 
+	/**
+	 * @param KCommandContext $context
+	 */
 	protected function _afterTableSelect(KCommandContext $context)
 	{
 		$data = $context->data;
@@ -63,12 +75,20 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
+	/**
+	 * @param KCommandContext $context
+	 * @return bool
+	 */
 	protected function _beforeTableInsert(KCommandContext $context)
 	{
 		return $this->_beforeTableUpdate($context);
 	}
 
 
+	/**
+	 * @param KCommandContext $context
+	 * @return bool
+	 */
 	protected function _beforeTableUpdate(KCommandContext $context)
 	{
 		if($context->data instanceof KDatabaseRowAbstract)
@@ -84,8 +104,11 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 			}
 		}
 	}
-	
 
+
+	/**
+	 * @param $mixer
+	 */
 	public function setMixer($mixer)
 	{
 		static $loaded = array();
@@ -102,6 +125,13 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
+	/**
+	 * @param $column
+	 * @param $constraint
+	 * @param array $options
+	 * @return ComValidationDatabaseBehaviorValidatable
+	 * @throws KDatabaseException
+	 */
 	public function addConstraint($column, $constraint, $options = array())
 	{
 		$mixer = $this->getMixer();
@@ -130,6 +160,11 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
+	/**
+	 * @return mixed
+	 * @throws KDatabaseException
+	 * @throws KException
+	 */
 	public function validate()
 	{
 		$mixer = $this->getMixer();
@@ -167,6 +202,10 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
+	/**
+	 * @return array
+	 * @throws KDatabaseException
+	 */
 	public function getValidationErrors()
 	{
 		$mixer = $this->getMixer();
@@ -179,12 +218,19 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
+	/**
+	 * @return array
+	 */
 	public function loadConstraints()
 	{
 		return array();
 	}
 
 
+	/**
+	 * @return mixed
+	 * @throws KDatabaseException
+	 */
 	public function getConstraints()
 	{
 		$mixer = $this->getMixer();
@@ -203,6 +249,10 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
+	/**
+	 * @return mixed
+	 * @throws KDatabaseException
+	 */
 	protected function getConstraintsFromDB()
 	{
 		$mixer = $this->getMixer();
