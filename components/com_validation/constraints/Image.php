@@ -15,7 +15,7 @@
  *
  * @api
  */
-class ComValidationConstraintImage extends File
+class ComValidationConstraintImage extends ComValidationConstraintFile
 {
     public $mimeTypes = 'image/*';
     public $minWidth = null;

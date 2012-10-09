@@ -16,7 +16,7 @@
  *
  * @author Benjamin Dulau <benjamin.dulau@gmail.com>
  */
-class ComValidationValidatorImage extends FileValidator
+class ComValidationValidatorImage extends ComValidationValidatorFile
 {
     /**
      * {@inheritDoc}
