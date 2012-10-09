@@ -283,6 +283,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 					case 'time': $constraint_set[] = 'time'; break;
 
 					case 'int':
+					case 'integer':
 					case 'bool':
 					case 'boolean':
 					case 'float':
@@ -294,10 +295,12 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 					case 'smallint':
 					case 'mediumint':
 					case 'bigint':
-						$constraint_set['type'] = array('type' => 'int');
+						if($column->length == 1 && $column->type == 'tinyint') $constraint_set['type'] = array('type' => 'boolean');
+						else $constraint_set['type'] = array('type' => 'int');
 						break;
 
 					case 'real':
+					case 'double':
 					case 'double precision':
 						$constraint_set['type'] = array('type' => 'float');
 						break;
