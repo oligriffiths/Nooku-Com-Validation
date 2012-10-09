@@ -294,8 +294,12 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 					case 'smallint':
 					case 'mediumint':
 					case 'bigint':
-					case 'double precision':
 						$constraint_set['type'] = array('type' => 'int');
+						break;
+
+					case 'real':
+					case 'double precision':
+						$constraint_set['type'] = array('type' => 'float');
 						break;
 
 					case 'bit':
