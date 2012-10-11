@@ -293,8 +293,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 				switch($column->type)
 				{
-					case 'date': $constraint_set[] = 'date'; break;
-					case 'datetime': $constraint_set[] = 'datetime'; break;
+					case 'date': $constraint_set[] = array('type' => 'date', 'allow_nulldate' => true); break;
+					case 'datetime': $constraint_set[] = array('type' => 'datetime', 'allow_nulldate' => true); break;
 					case 'time': $constraint_set[] = 'time'; break;
 
 					case 'int':
