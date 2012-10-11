@@ -26,6 +26,30 @@ class ComValidationValidatorType extends ComValidationValidatorDefault
             return;
         }
 
+        if($constraint->convert_string && is_string($value))
+        {
+            switch($constraint->type)
+            {
+                case 'long':
+                case 'integer':
+                case 'int':
+                    if(preg_match('#[0-9]+#', $value)) $value = intval($value);
+                    break;
+
+                case 'real':
+                case 'double':
+                case 'float':
+                    if(preg_match('#[0-9]+(\.[0-9]+)?#', $value)) $value = floatval($value);
+                    break;
+
+                case 'boolean':
+                case 'bool':
+                    if(strtolower($value) == 'true' || $value == '1') $value = true;
+                    if(strtolower($value) == 'false' || $value == '0') $value = false;
+                    break;
+            }
+        }
+
         $type = strtolower($constraint->type);
         $type = $type == 'boolean' ? 'bool' : $constraint->type;
         $isFunction = 'is_'.$type;

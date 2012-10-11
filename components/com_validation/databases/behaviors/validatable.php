@@ -299,29 +299,23 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 					case 'int':
 					case 'integer':
-					case 'bool':
-					case 'boolean':
+                    case 'tinyint':
+                    case 'smallint':
+                    case 'mediumint':
+                    case 'bigint':
 					case 'float':
 					case 'double':
-						$constraint_set['type'] = array('type' => $column->type);
+                    case 'real':
+                    case 'double':
+                    case 'double precision':
+                        if($column->length == 1 && $column->type == 'tinyint') $constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
+						else $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
 						break;
 
-					case 'tinyint':
-					case 'smallint':
-					case 'mediumint':
-					case 'bigint':
-						if($column->length == 1 && $column->type == 'tinyint') $constraint_set['type'] = array('type' => 'boolean');
-						else $constraint_set['type'] = array('type' => 'int');
-						break;
-
-					case 'real':
-					case 'double':
-					case 'double precision':
-						$constraint_set['type'] = array('type' => 'float');
-						break;
-
+                    case 'bool':
+                    case 'boolean':
 					case 'bit':
-						$constraint_set['type'] = array('type' => 'boolean');
+						$constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
 						break;
 
 					case 'varchar':

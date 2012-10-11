@@ -36,47 +36,47 @@ class ComValidationValidatorIp extends ComValidationValidatorDefault
         $value = (string) $value;
 
         switch ($constraint->version) {
-            case Ip::V4:
+            case ComValidationConstraintIp::V4:
                $flag = FILTER_FLAG_IPV4;
                break;
 
-            case Ip::V6:
+            case ComValidationConstraintIp::V6:
                $flag = FILTER_FLAG_IPV6;
                break;
 
-            case Ip::V4_NO_PRIV:
+            case ComValidationConstraintIp::V4_NO_PRIV:
                $flag = FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE;
                break;
 
-            case Ip::V6_NO_PRIV:
+            case ComValidationConstraintIp::V6_NO_PRIV:
                $flag = FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE;
                break;
 
-            case Ip::ALL_NO_PRIV:
+            case ComValidationConstraintIp::ALL_NO_PRIV:
                $flag = FILTER_FLAG_NO_PRIV_RANGE;
                break;
 
-            case Ip::V4_NO_RES:
+            case ComValidationConstraintIp::V4_NO_RES:
                $flag = FILTER_FLAG_IPV4 | FILTER_FLAG_NO_RES_RANGE;
                break;
 
-            case Ip::V6_NO_RES:
+            case ComValidationConstraintIp::V6_NO_RES:
                $flag = FILTER_FLAG_IPV6 | FILTER_FLAG_NO_RES_RANGE;
                break;
 
-            case Ip::ALL_NO_RES:
+            case ComValidationConstraintIp::ALL_NO_RES:
                $flag = FILTER_FLAG_NO_RES_RANGE;
                break;
 
-            case Ip::V4_ONLY_PUBLIC:
+            case ComValidationConstraintIp::V4_ONLY_PUBLIC:
                $flag = FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
                break;
 
-            case Ip::V6_ONLY_PUBLIC:
+            case ComValidationConstraintIp::V6_ONLY_PUBLIC:
                $flag = FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
                break;
 
-            case Ip::ALL_ONLY_PUBLIC:
+            case ComValidationConstraintIp::ALL_ONLY_PUBLIC:
                $flag = FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
                break;
 
