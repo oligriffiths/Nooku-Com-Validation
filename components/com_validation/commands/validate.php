@@ -9,23 +9,14 @@ class ComValidationCommandValidate extends KCommand
 
 		if( $item )
 		{
-			$identifier = (string)$item->getIdentifier();
-
 			$item->setData(KConfig::unbox($context->data));
-
 			if($item->isValidatable())
 			{
 				try{
 					$item->validate();
 				}catch(Exception $e)
 				{
-					foreach($item->getTable()->getUniqueColumns() AS $column_id => $column)
-					{
-						if($column->primary) $identifier .= '.'.$item->get($column_id);
-					}
-
-					//Store the data in the session to pre-populate the model item
-					KRequest::set('session.data.'.$identifier, $item->getData() );
+					//Redirect to the referring page
 					$referrer = KRequest::referrer();
 					if($referrer){
 						$query = $referrer->getQuery(true);
@@ -37,7 +28,6 @@ class ComValidationCommandValidate extends KCommand
 					return false;
 				}
 			}
-
 		}
 
 		return true;

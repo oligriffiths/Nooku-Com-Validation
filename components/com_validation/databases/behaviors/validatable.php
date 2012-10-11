@@ -165,7 +165,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	 * @throws KDatabaseException
 	 * @throws KException
 	 */
-	public function validate()
+	public function validate($store = true)
 	{
 		$mixer = $this->getMixer();
 		if(!$mixer instanceof KDatabaseRowAbstract){
@@ -181,6 +181,20 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 		$result = $set->validate($mixer->getData());
 
 		if(!$result){
+
+			//Store the data in the session
+			if(!$store)
+			{
+				//Construct object identifier
+				$id = (string) $mixer->getIdentifier();
+
+				//Add the rows identifers
+				foreach($mixer->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $id .= '.'.$mixer->get($column_id);
+				
+				//Retrieve the data in the session to pre-populate the row
+				KRequest::set('session.data.'.$id, $mixer->getData();
+			}
+
 			$errors = $set->getErrors();
 
 			//Store the errors
