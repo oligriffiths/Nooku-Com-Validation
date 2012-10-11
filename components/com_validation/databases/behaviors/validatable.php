@@ -169,8 +169,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	public function validate($store = true)
 	{
 		$mixer = $this->getMixer();
-		if(!$mixer instanceof KDatabaseRowAbstract){
-			throw new KDatabaseException(__FUNCTION__.' may only be called on a KDatabaseRow');
+		if(!$mixer instanceof KObjectArray){
+			throw new KDatabaseException(__FUNCTION__.' may only be called on a KObjectArray');
 		}
 
 		//Clear any previous errors
@@ -224,8 +224,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	public function getValidationErrors()
 	{
 		$mixer = $this->getMixer();
-		if(!$mixer instanceof KDatabaseRowAbstract){
-			throw new KDatabaseException(__FUNCTION__.' may only be called on a KDatabaseRow');
+		if(!$mixer instanceof KObjectArray){
+			throw new KDatabaseException(__FUNCTION__.' may only be called on a KObjectArray');
 		}
 
 		$hash = spl_object_hash($mixer);
@@ -249,8 +249,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	public function getConstraints()
 	{
 		$mixer = $this->getMixer();
-		if(!$mixer instanceof KDatabaseRowAbstract){
-			throw new KDatabaseException(__FUNCTION__.' may only be called on a KDatabaseRow');
+		if(!$mixer instanceof KObjectArray){
+			throw new KDatabaseException(__FUNCTION__.' may only be called on a KObjectArray');
 		}
 
 		$hash = spl_object_hash($mixer);
