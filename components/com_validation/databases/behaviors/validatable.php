@@ -63,7 +63,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 						//Retrieve the data in the session to pre-populate the row
 						if($prev_data = KRequest::get('session.data.'.$id, 'raw'))
 						{
-							$row->setData($prev_data, false);
+							$row->setData($prev_data);
 
 							//Clear session data
 							KRequest::set('session.data.'.$id, null);
@@ -190,9 +190,9 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 				//Add the rows identifers
 				foreach($mixer->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $id .= '.'.$mixer->get($column_id);
-				
+
 				//Retrieve the data in the session to pre-populate the row
-				KRequest::set('session.data.'.$id, $mixer->getData();
+				KRequest::set('session.data.'.$id, $mixer->getData());
 			}
 
 			$errors = $set->getErrors();
