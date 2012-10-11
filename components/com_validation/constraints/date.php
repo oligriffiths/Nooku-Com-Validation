@@ -18,4 +18,5 @@
 class ComValidationConstraintDate extends ComValidationConstraintDefault
 {
     public $message = 'This value is not a valid date.';
+    public $allow_nulldate = false;
 }
