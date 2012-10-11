@@ -45,7 +45,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 				$pks = array();
 
 				//Check if there is session data for this identifier root
-				if(KRequest::get('session.data.'.$identifier,'raw'))
+				$hasSessionData = KRequest::has('session.data.'.$identifier,'raw');
+				if($hasSessionData)
 				{
 					//Compile primary keys
 					foreach($context->data->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $pks[] = $column_id;
@@ -54,7 +55,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 				foreach($data AS $row)
 				{
 					//Ensure behavior is mixed in
-					if($row->isValidatable())
+					if($row->isValidatable() && $hasSessionData)
 					{
 						//Construct object identifier
 						$id = $identifier;
