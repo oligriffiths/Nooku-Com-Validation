@@ -38,7 +38,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 				if($data instanceof KDatabaseRowAbstract) $data = array($data);
 
 				//Get the rows primary key columns ot build identifier
-				$identifier = $context->data->getIdentifier();
+				$identifier = clone $context->data->getIdentifier();
 				$identifier->path = array('database','row');
 				$identifier->name = KInflector::singularize($identifier->name);
 				$identifier = (string) $identifier;
