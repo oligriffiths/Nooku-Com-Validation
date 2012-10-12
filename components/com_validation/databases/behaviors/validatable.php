@@ -128,7 +128,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         if($prev_data = KRequest::get('session.data.'.$identifier, 'raw'))
         {
             $row_data = $row->getData();
-            if(array_intersect_key($prev_data, $row_data) == $prev_data)
+            if(array_intersect_key($row_data, $prev_data) == $row_data)
             {
                 $row->setData($prev_data);
 
@@ -315,7 +315,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 				$constraint_set = array();
 
-				if($column->required) $constraint_set[] = 'notblank';
+                $required_type = 'notblank';
 				if($column->name == 'email') $constraint_set[] = 'email';
 				if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set[] = 'ip';
 				if($column->name == 'image') $constraint_set[] = 'image';
@@ -337,13 +337,16 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
                     case 'real':
                     case 'double':
                     case 'double precision':
+                    case 'bit': // this needed here until the query object handles booleans and the database adapter
+                                // handles bit columns - Oli Oct 2012
+                        $required_type = 'notnull'; //integers can be 0, notblank fails on this
                         if($column->length == 1 && $column->type == 'tinyint') $constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
-						else $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
-						break;
+                        else $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
+                    break;
 
                     case 'bool':
                     case 'boolean':
-					case 'bit':
+                        $required_type = 'notnull'; //integers can be 0, notblank fails on this
 						$constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
 						break;
 
@@ -359,6 +362,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 						$constraint_set['type'] = array('type' => 'string');
 						break;
 				}
+
+                if($column->required) $constraint_set[] = $required_type;
 
 				if($column->length) $constraint_set['maxlength'] = array('limit' => $column->length);
 
