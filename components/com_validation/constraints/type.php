@@ -21,6 +21,7 @@ class ComValidationConstraintType extends ComValidationConstraintDefault
     public $message = 'This value should be of type {{ type }}.';
     public $type;
     public $convert_string = false; //Allows a string to be converted is it is numeric
+    public $convert_bool = false; // Allows values of 0/1/ to be converted to boolean
 
     /**
      * {@inheritDoc}

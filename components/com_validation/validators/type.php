@@ -50,6 +50,14 @@ class ComValidationValidatorType extends ComValidationValidatorDefault
             }
         }
 
+        if ($constraint->convert_bool) {
+            if ($value == '0') {
+                $value = false;
+            } else if ($value == '1') {
+                $value = true;
+            }
+        }
+
         $type = strtolower($constraint->type);
         $type = $type == 'boolean' ? 'bool' : $constraint->type;
         $isFunction = 'is_'.$type;

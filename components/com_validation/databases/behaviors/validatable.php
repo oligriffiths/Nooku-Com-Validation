@@ -42,33 +42,16 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 				$identifier->path = array('database','row');
 				$identifier->name = KInflector::singularize($identifier->name);
 				$identifier = (string) $identifier;
-				$pks = array();
 
 				//Check if there is session data for this identifier root
 				$hasSessionData = KRequest::has('session.data.'.$identifier,'raw');
-				if($hasSessionData)
-				{
-					//Compile primary keys
-					foreach($context->data->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $pks[] = $column_id;
-				}
 
 				foreach($data AS $row)
 				{
 					//Ensure behavior is mixed in
 					if($row->isValidatable() && $hasSessionData)
 					{
-						//Construct object identifier
-						$id = $identifier;
-						foreach($pks AS $pk) $id .= '.'.$row->get($pk);
-
-						//Retrieve the data in the session to pre-populate the row
-						if($prev_data = KRequest::get('session.data.'.$id, 'raw'))
-						{
-							$row->setData($prev_data);
-
-							//Clear session data
-							KRequest::set('session.data.'.$id, null);
-						}
+						$this->loadFromSession($row);
 					}
 				}
 			}
@@ -126,39 +109,55 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
-	/**
-	 * @param $column
-	 * @param $constraint
-	 * @param array $options
-	 * @return ComValidationDatabaseBehaviorValidatable
-	 * @throws KDatabaseException
-	 */
-	public function addConstraint($column, $constraint, $options = array())
-	{
-		$mixer = $this->getMixer();
-		if(!$mixer instanceof KDatabaseRowAbstract)
-		{
-			throw new KDatabaseException(__FUNCTION__.' may only be called on a KDatabaseRow');
-		}
+    /**
+     * Loads a rows data in the session
+     * @param null|KDatabaseRowInterface $row
+     * @return ComValidationDatabaseBehaviorValidatable
+     */
+    public function loadFromSession($row = null)
+    {
+        $row = $row ? $row : $this->getMixer();
 
-		$hash = spl_object_hash($mixer);
+        //Get the rows primary key columns ot build identifier
+        $identifier = (string) $row->getIdentifier();
 
-		if(!isset($this->_constraints[$hash])){
-			$this->_constraints[$hash] = array();
-		}
+        //Compile primary keys
+        foreach($row->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $identifier .= '.'.$row->get($column_id);
 
-		if(!isset($this->_constraints[$hash][$column])){
-			$this->_constraints[$hash][$column] = array();
-		}
+        //Retrieve the data in the session to pre-populate the row
+        if($prev_data = KRequest::get('session.data.'.$identifier, 'raw'))
+        {
+            $row_data = $row->getData();
+            if(array_intersect_key($row_data, $prev_data) == $row_data)
+            {
+                $row->setData($prev_data);
 
-		if($constraint instanceof ComValidationConstraintDefault){
-			$this->_constraints[$hash][$column][] = $constraint;
-		}else{
-			$this->_constraints[$hash][$column][$constraint] = $options;
-		}
+                //Clear session data
+                KRequest::set('session.data.'.$identifier, null);
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
+
+
+    /**
+     * Stores a rows data in the session
+     * @param null|KDatabaseRowInterface $row
+     */
+    public function storeToSession($row = null)
+    {
+        $row = $row ? $row : $this->getMixer();
+
+        //Construct object identifier
+        $identifier = (string) $row->getIdentifier();
+
+        //Add the rows identifers
+        foreach($row->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $identifier .= '.'.$row->get($column_id);
+
+        //Retrieve the data in the session to pre-populate the row
+        KRequest::set('session.data.'.$identifier, $row->getData());
+    }
 
 
 	/**
@@ -177,8 +176,10 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 		$hash = spl_object_hash($mixer);
 		$this->_errors[$hash] = array();
 
+        //Get the validation get and pass in constraints
 		$set = $this->getService('com://site/validation.validator.set', array('constraints' => $mixer->getConstraints()));
 
+        //Validate the data
 		$result = $set->validate($mixer->getData());
 
 		if(!$result){
@@ -186,14 +187,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 			//Store the data in the session
 			if($store)
 			{
-				//Construct object identifier
-				$id = (string) $mixer->getIdentifier();
-
-				//Add the rows identifers
-				foreach($mixer->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $id .= '.'.$mixer->get($column_id);
-
-				//Retrieve the data in the session to pre-populate the row
-				KRequest::set('session.data.'.$id, $mixer->getData());
+				$this->storeToSession($mixer);
 			}
 
 			$errors = $set->getErrors();
@@ -217,7 +211,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
-	/**
+    /**
 	 * @return array
 	 * @throws KDatabaseException
 	 */
@@ -242,7 +236,42 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
-	/**
+    /**
+     * @param $column
+     * @param $constraint
+     * @param array $options
+     * @return ComValidationDatabaseBehaviorValidatable
+     * @throws KDatabaseException
+     */
+    public function addConstraint($column, $constraint, $options = array())
+    {
+        $mixer = $this->getMixer();
+        if(!$mixer instanceof KDatabaseRowAbstract)
+        {
+            throw new KDatabaseException(__FUNCTION__.' may only be called on a KDatabaseRow');
+        }
+
+        $hash = spl_object_hash($mixer);
+
+        if(!isset($this->_constraints[$hash])){
+            $this->_constraints[$hash] = array();
+        }
+
+        if(!isset($this->_constraints[$hash][$column])){
+            $this->_constraints[$hash][$column] = array();
+        }
+
+        if($constraint instanceof ComValidationConstraintDefault){
+            $this->_constraints[$hash][$column][] = $constraint;
+        }else{
+            $this->_constraints[$hash][$column][$constraint] = $options;
+        }
+
+        return $this;
+    }
+
+
+    /**
 	 * @return mixed
 	 * @throws KDatabaseException
 	 */
@@ -276,7 +305,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 		}
 
 		$identifier = (string) $mixer->getTable()->getIdentifier();
-		if(!isset($this->_constraints[$identifier]))
+		if(!isset($this->_constraints_db[$identifier]))
 		{
 			$constraints = array();
 			$columns = $mixer->getTable()->getColumns();
@@ -286,7 +315,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 				$constraint_set = array();
 
-				if($column->required) $constraint_set[] = 'notblank';
+                $required_type = 'notblank';
 				if($column->name == 'email') $constraint_set[] = 'email';
 				if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set[] = 'ip';
 				if($column->name == 'image') $constraint_set[] = 'image';
@@ -308,14 +337,17 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
                     case 'real':
                     case 'double':
                     case 'double precision':
-                        if($column->length == 1 && $column->type == 'tinyint') $constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
-						else $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
-						break;
+                    case 'bit': // this needed here until the query object handles booleans and the database adapter
+                                // handles bit columns - Oli Oct 2012
+                        $required_type = 'notnull'; //integers can be 0, notblank fails on this
+                        if($column->length == 1 && ($column->type == 'tinyint' || $column->type == 'bit')) $constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
+                        else $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
+                    break;
 
                     case 'bool':
                     case 'boolean':
-					case 'bit':
-						$constraint_set['type'] = array('type' => 'boolean', 'convert_bool' => true);
+                        $required_type = 'notnull'; //integers can be 0, notblank fails on this
+						$constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
 						break;
 
 					case 'varchar':
@@ -330,6 +362,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 						$constraint_set['type'] = array('type' => 'string');
 						break;
 				}
+
+                if($column->required) $constraint_set[] = $required_type;
 
 				if($column->length) $constraint_set['maxlength'] = array('limit' => $column->length);
 
