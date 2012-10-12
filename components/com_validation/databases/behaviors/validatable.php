@@ -347,7 +347,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
                     case 'bool':
                     case 'boolean':
                         $required_type = 'notnull'; //integers can be 0, notblank fails on this
-						$constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
+						$constraint_set['type'] = array('type' => 'boolean', 'convert_bool' => true);
 						break;
 
 					case 'varchar':
