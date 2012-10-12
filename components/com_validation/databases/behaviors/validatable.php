@@ -340,7 +340,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
                     case 'bit': // this needed here until the query object handles booleans and the database adapter
                                 // handles bit columns - Oli Oct 2012
                         $required_type = 'notnull'; //integers can be 0, notblank fails on this
-                        if($column->length == 1 && $column->type == 'tinyint') $constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
+                        if($column->length == 1 && ($column->type == 'tinyint' || $column->type == 'bit')) $constraint_set['type'] = array('type' => 'boolean', 'convert_string' => true);
                         else $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
                     break;
 
