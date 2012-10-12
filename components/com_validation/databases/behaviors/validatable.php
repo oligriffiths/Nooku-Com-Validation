@@ -127,10 +127,14 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         //Retrieve the data in the session to pre-populate the row
         if($prev_data = KRequest::get('session.data.'.$identifier, 'raw'))
         {
-            $row->setData($prev_data);
+            $row_data = $row->getData();
+            if(array_intersect_key($prev_data, $row_data) == $prev_data)
+            {
+                $row->setData($prev_data);
 
-            //Clear session data
-            KRequest::set('session.data.'.$identifier, null);
+                //Clear session data
+                KRequest::set('session.data.'.$identifier, null);
+            }
         }
 
         return $this;
