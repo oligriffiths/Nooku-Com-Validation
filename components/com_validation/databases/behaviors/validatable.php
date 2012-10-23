@@ -177,10 +177,12 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 		$this->_errors[$hash] = array();
 
         //Get the validation get and pass in constraints
-		$set = $this->getService('com://site/validation.validator.set', array('constraints' => $mixer->getConstraints()));
+		$set = $this->getService('com://site/validation.validator.set', array('constraints' => $this->getConstraints()));
 
         //Validate the data
-		$result = $set->validate($mixer->getData());
+        $data = $mixer->getData();
+        $data = $mixer instanceof KDatabaseRowAbstract && $mixer->getTable() ? $mixer->getTable()->filter($data, true) : $data;
+		$result = $set->validate($data);
 
 		if(!$result){
 
@@ -359,7 +361,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 					case 'tinyblob':
 					case 'smallblob':
 					case 'longblob':
-						$constraint_set['type'] = array('type' => 'string');
+                        $constraint_set['type'] = array('type' => 'string');
 						break;
 				}
 
