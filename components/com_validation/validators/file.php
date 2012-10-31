@@ -116,12 +116,9 @@ class ComValidationValidatorFile extends ComValidationValidatorDefault
         }
 
         if ($constraint->mimeTypes) {
-            if (!$value instanceof FileObject) {
-                $value = new FileObject($value);
-            }
 
             $mimeTypes = (array) $constraint->mimeTypes;
-            $mime = $value->getMimeType();
+	        $mime = mime_content_type($value);
             $valid = false;
 
             foreach ($mimeTypes as $mimeType) {

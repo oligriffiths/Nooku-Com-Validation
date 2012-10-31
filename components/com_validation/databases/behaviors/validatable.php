@@ -156,7 +156,9 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         foreach($row->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $identifier .= '.'.$row->get($column_id);
 
         //Retrieve the data in the session to pre-populate the row
-        KRequest::set('session.data.'.$identifier, $row->getData());
+	    //Casting as a kconfig and to array will convert and sub kconfigs back to arrays
+	    $data = new KConfig($row->getData());
+        KRequest::set('session.data.'.$identifier, $data->toArray());
     }
 
 
@@ -184,7 +186,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         $data = $mixer instanceof KDatabaseRowAbstract && $mixer->getTable() ? $mixer->getTable()->filter($data, true) : $data;
 		$result = $set->validate($data);
 
-		if(!$result){
+		if($result === false){
 
 			//Store the data in the session
 			if($store)
