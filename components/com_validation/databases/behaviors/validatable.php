@@ -10,15 +10,31 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	/**
 	 * @var array
 	 */
-	protected $_constraints_db = array();
+	protected $_constraints_db;
+
 	/**
 	 * @var array
 	 */
-	protected $_constraints = array();
+	protected $_constraints_table;
+
+
+	protected $_constraints;
+
 	/**
 	 * @var array
 	 */
 	protected $_errors = array();
+
+	public function __construct(KConfig $config = null)
+	{
+		$config->append(array(
+			'constraints' => array()
+		));
+		parent::__construct($config);
+
+		$this->_constraints_table = $config->constraints->toArray();
+		$this->loadConstraints();
+	}
 
 
 	/**
@@ -44,14 +60,14 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 				$identifier = (string) $identifier;
 
 				//Check if there is session data for this identifier root
-				$hasSessionData = KRequest::has('session.data.'.$identifier,'raw');
-
-				foreach($data AS $row)
-				{
-					//Ensure behavior is mixed in
-					if($row->isValidatable() && $hasSessionData)
+				if($hasSessionData = KRequest::has('session.data.'.$identifier,'raw')){
+					foreach($data AS $row)
 					{
-						$this->loadFromSession($row);
+						//Ensure behavior is mixed in
+						if($row->isValidatable())
+						{
+							$this->loadFromSession($row);
+						}
 					}
 				}
 			}
@@ -85,25 +101,6 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 				}
 
 				return true;
-			}
-		}
-	}
-
-
-	/**
-	 * @param $mixer
-	 */
-	public function setMixer($mixer)
-	{
-		static $loaded = array();
-
-		parent::setMixer($mixer);
-
-		if($mixer instanceof KDatabaseRowAbstract && $mixer->isValidatable()){
-			$hash = spl_object_hash($mixer);
-			if(!isset($loaded[$hash])){
-				$loaded[$hash] = true;
-				$this->getConstraints();
 			}
 		}
 	}
@@ -161,6 +158,22 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         KRequest::set('session.data.'.$identifier, $data->toArray());
     }
 
+	/**
+	 * Stores a rows data in the session
+	 * @param null|KDatabaseRowInterface $row
+	 */
+	public function removeFromSession($row = null)
+	{
+		$row = $row ? $row : $this->getMixer();
+
+		//Construct object identifier
+		$identifier = (string) $row->getIdentifier();
+
+		//Add the rows identifers
+		foreach($row->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $identifier .= '.'.$row->get($column_id);
+
+		KRequest::set('session.data.'.$identifier, null);
+	}
 
 	/**
 	 * @return mixed
@@ -185,6 +198,11 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         $data = $mixer->getData();
         $data = $mixer instanceof KDatabaseRowAbstract && $mixer->getTable() ? $mixer->getTable()->filter($data, true) : $data;
 		$result = $set->validate($data);
+		$errors = $set->getErrors();
+
+		//Store the errors
+		$this->_errors[$hash] = $errors;
+		$mixer->setData(array('errors' => $errors), false);
 
 		if($result === false){
 
@@ -193,11 +211,6 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 			{
 				$this->storeToSession($mixer);
 			}
-
-			$errors = $set->getErrors();
-
-			//Store the errors
-			$this->_errors[$hash] = $errors;
 
 			$text = '';
 			foreach($errors AS $column => $error)
@@ -209,6 +222,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 			}
 
 			throw new KException($text);
+		}else{
+			$this->removeFromSession($mixer);
 		}
 
 		return $result;
@@ -219,24 +234,29 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	 * @return array
 	 * @throws KDatabaseException
 	 */
-	public function getValidationErrors()
+	public function getValidationErrors($key = null, $clear = false)
 	{
 		$mixer = $this->getMixer();
 		if(!$mixer instanceof KObjectArray){
 			throw new KDatabaseException(__FUNCTION__.' may only be called on a KObjectArray');
 		}
 
-		$hash = spl_object_hash($mixer);
-		return isset($this->_errors[$hash]) ? $this->_errors[$hash] : array();
-	}
+		$errors = (array) $mixer->errors;
 
+		if($key){
+			$return = isset($errors[$key]) ? $errors[$key] : array();
 
-	/**
-	 * @return array
-	 */
-	public function loadConstraints()
-	{
-		return array();
+			if($clear){
+				unset($errors[$key]);
+				$mixer->setData(array('errors' => $errors), false);
+			}
+
+			return $return;
+		}
+		else{
+			if($clear) $mixer->setData(array('errors' => array()), false);
+			return $errors;
+		}
 	}
 
 
@@ -255,45 +275,40 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
             throw new KDatabaseException(__FUNCTION__.' may only be called on a KDatabaseRow');
         }
 
-        $hash = spl_object_hash($mixer);
-
-        if(!isset($this->_constraints[$hash])){
-            $this->_constraints[$hash] = array();
-        }
-
-        if(!isset($this->_constraints[$hash][$column])){
-            $this->_constraints[$hash][$column] = array();
+        if(!isset($this->_constraints[$column])){
+            $this->_constraints[$column] = array();
         }
 
         if($constraint instanceof ComValidationConstraintDefault){
-            $this->_constraints[$hash][$column][] = $constraint;
+            $this->_constraints[$column][] = $constraint;
         }else{
-            $this->_constraints[$hash][$column][$constraint] = $options;
+            $this->_constraints[$column][$constraint] = $options;
         }
 
         return $this;
     }
 
 
+	/**
+	 * Returns the constraints
+	 * @return array
+	 */
+	public function getConstraints()
+	{
+		return $this->_constraints;
+	}
+
+
     /**
 	 * @return mixed
 	 * @throws KDatabaseException
 	 */
-	public function getConstraints()
+	protected function loadConstraints()
 	{
-		$mixer = $this->getMixer();
-		if(!$mixer instanceof KObjectArray){
-			throw new KDatabaseException(__FUNCTION__.' may only be called on a KObjectArray');
-		}
+		$this->loadConstraintsFromDB();
+		$this->_constraints = array_merge($this->_constraints_db, $this->_constraints_table);
 
-		$hash = spl_object_hash($mixer);
-		if(!isset($this->_constraints[$hash])){
-
-			$db_constraints             = $this->getConstraintsFromDB();
-			$constraints                = $mixer->loadConstraints();
-			$this->_constraints[$hash]  = array_merge($db_constraints, $constraints);
-		}
-		return $this->_constraints[$hash];
+		return $this->_constraints;
 	}
 
 
@@ -301,18 +316,13 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	 * @return mixed
 	 * @throws KDatabaseException
 	 */
-	protected function getConstraintsFromDB()
+	protected function loadConstraintsFromDB()
 	{
-		$mixer = $this->getMixer();
-		if(!$mixer instanceof KDatabaseRowAbstract){
-			throw new KDatabaseException(__FUNCTION__.' may only be called on a KDatabaseRow');
-		}
-
-		$identifier = (string) $mixer->getTable()->getIdentifier();
-		if(!isset($this->_constraints_db[$identifier]))
+		if(!isset($this->_constraints_db))
 		{
+			$mixer = $this->getMixer();
 			$constraints = array();
-			$columns = $mixer->getTable()->getColumns();
+			$columns = $mixer->getColumns();
 			foreach($columns AS $id => $column)
 			{
 				if($column->primary) continue;
@@ -320,7 +330,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 				$constraint_set = array();
 
                 $required_type = 'notblank';
-				if($column->name == 'email') $constraint_set[] = 'email';
+				if($column->name == 'email' || $column->name == 'email_address') $constraint_set[] = 'email';
 				if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set[] = 'ip';
 				if($column->name == 'image') $constraint_set[] = 'image';
 
@@ -374,10 +384,10 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 				if(!empty($constraint_set)) $constraints[$id] = $constraint_set;
 			}
 
-			$this->_constraints_db[$identifier] = $constraints;
+			$this->_constraints_db = $constraints;
 		}
 
 		//Set the mixers constraints
-		return $this->_constraints_db[$identifier];
+		return $this->_constraints_db;
 	}
 }
