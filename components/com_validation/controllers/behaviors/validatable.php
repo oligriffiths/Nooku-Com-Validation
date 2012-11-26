@@ -88,18 +88,22 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 		$model = $context->caller->getModel();
 		$item = $model->getItem();
 
-		$errors = (array) $item->getValidationErrors();
 
-		foreach($errors AS $key => $error)
-		{
-			foreach($error AS $e){
-				$msg = 'Error: ('.KInflector::humanize($key).') - '.$e;
-				if(class_exists('KMessage')){
-					KMessage::setMessage($msg, 'error', $item->getIdentifier(), $key);
-				}else if(class_exists('JApplication')){
-					JFactory::getApplication()->enqueueMessage($msg,'error');
-				}
-			}
+        if ($item->isValidatable()) {
+    		$errors = (array) $item->getValidationErrors();
+
+
+		    foreach($errors AS $key => $error)
+		    {
+			    foreach($error AS $e){
+				    $msg = 'Error: ('.KInflector::humanize($key).') - '.$e;
+				    if(class_exists('KMessage')){
+					    KMessage::setMessage($msg, 'error', $item->getIdentifier(), $key);
+				    }else if(class_exists('JApplication')){
+					    JFactory::getApplication()->enqueueMessage($msg,'error');
+				    }
+			    }
+            }
 		}
 	}
 }
