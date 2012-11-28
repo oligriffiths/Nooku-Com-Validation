@@ -155,8 +155,25 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         //Retrieve the data in the session to pre-populate the row
 	    //Casting as a kconfig and to array will convert and sub kconfigs back to arrays
 	    $data = new KConfig($row->getData());
-        KRequest::set('session.data.'.$identifier, $data->toArray());
+        $data = $data->toArray();
+
+        //Remove any objects
+        array_walk_recursive($data, array($this, 'removeKObjects'));
+
+        KRequest::set('session.data.'.$identifier, $data);
     }
+
+
+    /**
+     * Removes objects from an array
+     * @param $item
+     * @param $key
+     */
+    protected function removeKObjects(&$item, $key)
+    {
+        if($item instanceof KObject) $item = null;
+    }
+
 
 	/**
 	 * Stores a rows data in the session

@@ -11,7 +11,7 @@
 
 class ComValidationExceptionUnexpectedType extends KException
 {
-	public function __construct($value, $expectedType)
+	public function __construct($value = null, $expectedType = null)
 	{
 		parent::__construct(sprintf('Expected argument of type %s, %s given', $expectedType, gettype($value)));
 	}
