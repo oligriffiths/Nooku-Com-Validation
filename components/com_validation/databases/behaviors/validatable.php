@@ -209,7 +209,10 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 		$this->_errors[$hash] = array();
 
         //Get the validation get and pass in constraints
-		$set = $this->getService('com://site/validation.validator.set', array('constraints' => $this->getConstraints()));
+		$identifier = clone $this->getIdentifier();
+		$identifier->path = 'validator';
+		$identifier->name = 'set';
+		$set = $this->getService($identifier, array('constraints' => $this->getConstraints()));
 
         //Validate the data
         $data = $mixer->getData();

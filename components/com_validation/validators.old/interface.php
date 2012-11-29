@@ -25,7 +25,7 @@ interface ComValidationValidatorInterface
      *
      * @api
      */
-    public function validate($value, ComValidationConstraintDefault $constraint);
+    public function validate($value, $constraint = null);
 
 
 	/**

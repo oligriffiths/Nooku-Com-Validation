@@ -33,7 +33,7 @@ class ComValidationValidatorSet extends KObjectSet
 						$rule = $key;
 					}
 
-					$set->addConstraint($rule, $options);
+					$set->addConstraint($rule, array('options' => $options));
 				}
 
 				$constraintset = $set;
@@ -47,9 +47,9 @@ class ComValidationValidatorSet extends KObjectSet
 	}
 
 
-	public function addConstraintSet($handle, ComValidationConstraintSet $constraint)
+	public function addConstraintSet($handle, ComValidationConstraintSet $constraintset)
 	{
-		$this->_object_set->offsetSet($handle, $constraint);
+		$this->_object_set->offsetSet($handle, $constraintset);
 		return $this;
 	}
 
@@ -72,19 +72,13 @@ class ComValidationValidatorSet extends KObjectSet
 		{
 			if($constraints = $this->getConstraintSet($key))
 			{
-				foreach($constraints AS $constraint)
+				try{
+					$constraints->validate($value);
+				}catch(Exception $e)
 				{
-					if($validator = $constraint->getValidator())
-					{
-						try{
-							$validator->validate($value, $constraint);
-						}catch(Exception $e)
-						{
-							if(!isset($errors[$key])) $errors[$key] = array();
+					if(!isset($errors[$key])) $errors[$key] = array();
 
-							$errors[$key][] = $e->getMessage();
-						}
-					}
+					$errors[$key][] = $e->getMessage();
 				}
 			}
 		}

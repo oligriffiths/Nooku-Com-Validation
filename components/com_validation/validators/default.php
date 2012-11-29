@@ -19,6 +19,27 @@
  */
 class ComValidationValidatorDefault extends KObject implements ComValidationValidatorInterface, KServiceInstantiatable
 {
+	protected $_constraint;
+	protected $_filter;
+
+	public function __construct(KConfig $config = null)
+	{
+		parent::__construct($config);
+
+		$this->_constraint = $config->constraint;
+		$this->_filter = $config->filter;
+	}
+
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'constraint' => null,
+			'filter' => $this->getService('com:default.filter.'.$this->getIdentifier()->name)
+		));
+		parent::_initialize($config);
+	}
+
+
 	/**
 	 * Force creation of a singleton
 	 *
@@ -46,7 +67,14 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 	 *
 	 * @see ComValidationValidatorInterface::validate
 	 */
-	public function validate($value, ComValidationConstraintDefault $constraint){}
+	public function validate($value, $constraint = null)
+	{
+		$result = $this->_filter->validate($value);
+		if(!$result){
+			$message = $this->_constraint->getMessage($value);
+			throw new KException($message);
+		}
+	}
 
 
 	/**
@@ -56,18 +84,11 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 	 */
 	public function isValid($value, $constraint = null)
 	{
-		if(!$constraint instanceof ComValidationConstraintDefault)
-		{
-			$identifier = clone $this->getIdentifier();
-			$identifier->path = 'constraint';
-			$constraint = $this->getService($identifier, is_array($constraint) ? $constraint : array());
-		}
-
 		try{
 			$this->validate($value, $constraint);
 			return true;
 
-		}catch(ComValidationExceptionValidator $e)
+		}catch(KException $e)
 		{
 			return false;
 		}

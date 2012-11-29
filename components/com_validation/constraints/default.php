@@ -1,127 +1,71 @@
 <?php
-
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 /**
- * Contains the properties of a constraint definition.
- *
- * A constraint can be defined on a class, an option or a getter method.
- * The Constraint class encapsulates all the configuration required for
- * validating this class, option or getter result successfully.
- *
- * Constraint instances are immutable and serializable.
- *
- * @author Bernhard Schussek <bschussek@gmail.com>
- *
- * @api
+ * Created By: Oli Griffiths
+ * Date: 29/11/2012
+ * Time: 13:05
  */
-class ComValidationConstraintDefault extends KObject implements KObjectHandlable
+defined('KOOWA') or die('Protected resource');
+
+class ComValidationConstraintDefault extends KObject
 {
-	/**
-	 * The name of the group given to all constraints with no explicit group
-	 * @var string
-	 */
-	const DEFAULT_GROUP = 'Default';
+	protected $_options;
+	protected $_validator;
+	protected $_validator_options;
 
-	/**
-	 * Marks a constraint that can be put onto classes
-	 * @var string
-	 */
-	const CLASS_CONSTRAINT = 'class';
-
-	/**
-	 * Marks a constraint that can be put onto properties
-	 * @var string
-	 */
-	const PROPERTY_CONSTRAINT = 'property';
-
-	/**
-	 * @var array
-	 */
-	public $groups = array(self::DEFAULT_GROUP);
-
-	/**
-	 * Initializes the constraint with options.
-	 *
-	 * You should pass an associative array. The keys should be the names of
-	 * existing properties in this class. The values should be the value for these
-	 * properties.
-	 *
-	 * Alternatively you can override the method getDefaultOption() to return the
-	 * name of an existing property. If no associative array is passed, this
-	 * property is set instead.
-	 *
-	 * You can force that certain options are set by overriding
-	 * getRequiredOptions() to return the names of these options. If any
-	 * option is not set here, an exception is thrown.
-	 *
-	 * @param mixed $options The options (as associative array)
-	 *                       or the value for the default
-	 *                       option (any other type)
-	 *
-	 * @throws InvalidOptionsException       When you pass the names of non-existing
-	 *                                       options
-	 * @throws MissingOptionsException       When you don't pass any of the options
-	 *                                       returned by getRequiredOptions()
-	 * @throws ConstraintDefinitionException When you don't pass an associative
-	 *                                       array, but getDefaultOption() returns
-	 *                                       NULL
-	 *
-	 * @api
-	 */
-	public function __construct(KConfig $config)
+	public function __construct(KConfig $config = null)
 	{
 		parent::__construct($config);
-		$options = $config->toArray();
 
-		$missingOptions = array_flip((array) $this->getRequiredOptions());
-
-		if (is_array($options) && count($options) == 1 && isset($options['value'])) {
-			$options = $options['value'];
+		//Set validator if supplied
+		if($config->validator){
+			$this->_validator = $config->validator;
+			$this->_validator->setConstraint($this);
 		}
+		else $this->_validator_options = $config->validator_options->toArray();
 
-		if (is_array($options) && count($options) > 0 && is_string(key($options))) {
-			foreach ($options as $option => $value) {
-				if (property_exists($this, $option)) {
-					$this->$option = $value;
-					unset($missingOptions[$option]);
-				} else {
-					$invalidOptions[] = $option;
-				}
-			}
-		} elseif (null !== $options && ! (is_array($options) && count($options) === 0)) {
-			$option = $this->getDefaultOption();
+		//Store options
+		$this->_options = $config->options->toArray();
 
-			if (null === $option) {
-				throw new ConstraintDefinitionException(
-					sprintf('No default option is configured for constraint %s', get_class($this))
-				);
-			}
-
-			if (property_exists($this, $option)) {
-				$this->$option = $options;
-				unset($missingOptions[$option]);
-			} else {
-				$invalidOptions[] = $option;
+		//Ensure all required options are set
+		$required = $this->getRequiredOptions();
+		foreach($required AS $key){
+			if(!isset($this->_options[$key])){
+				throw new KException('A required option ('.$key.') for the constraint '.$this->getIdentifier()->name.'  was not supplied');
 			}
 		}
+	}
 
-		if (count($missingOptions) > 0) {
-			throw new MissingOptionsException(
-				sprintf('The options "%s" must be set for constraint %s', implode('", "', array_keys($missingOptions)), get_class($this)),
-				array_keys($missingOptions)
-			);
-		}
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			array(
+				'options' => array(
+					'message' => '{{ target }} is not a valid '.$this->getIdentifier()->name,
+					'message_target' => 'This value'
+				),
+				'validator_options' => array(),
+				'validator' => null
+			)
+		));
 
-		$this->groups = (array) $this->groups;
+		parent::_initialize($config);
+	}
+
+	/**
+	 * Allow public access to options
+	 * @param $name
+	 * @return null
+	 */
+	function __get($name)
+	{
+		if(isset($this->_options[$name])) return $this->_options[$name];
+		return null;
+	}
+
+
+	public function getRequiredOptions()
+	{
+		return array('message');
 	}
 
 	/**
@@ -137,97 +81,43 @@ class ComValidationConstraintDefault extends KObject implements KObjectHandlable
 		return $this->getIdentifier()->name;
 	}
 
-	/**
-	 * Unsupported operation.
-	 */
-	public function __set($option, $value)
+	public function getValidator($options = array())
 	{
-		throw new InvalidOptionsException(sprintf('The option "%s" does not exist in constraint %s', $option, get_class($this)), array($option));
-	}
-
-	/**
-	 * Adds the given group if this constraint is in the Default group
-	 *
-	 * @param string $group
-	 *
-	 * @api
-	 */
-	public function addImplicitGroupName($group)
-	{
-		if (in_array(Constraint::DEFAULT_GROUP, $this->groups) && !in_array($group, $this->groups)) {
-			$this->groups[] = $group;
+		if(!$this->_validator){
+			$options['constraint'] = $this;
+			$options = array_merge($this->_validator_options, $options);
+			$identifier = clone $this->getIdentifier();
+			$identifier->path = 'validator';
+			$this->_validator = $this->getService($identifier, $options);
 		}
+
+		return $this->_validator;
 	}
+
 
 	/**
-	 * Returns the name of the default option
-	 *
-	 * Override this method to define a default option.
-	 *
-	 * @return string
-	 * @see __construct()
-	 *
-	 * @api
+	 * Gets the message and replaces placeholders with their values
+	 * @param null $value - value used to {{ value }} placeholder
+	 * @param string $key - message key, for use with multiple messages
+	 * @return mixed|null
 	 */
-	public function getDefaultOption()
+	public function getMessage($value = null, $key = 'message')
 	{
-		return null;
-	}
+		$message = $this->$key;
 
-	/**
-	 * Returns the name of the required options
-	 *
-	 * Override this method if you want to define required options.
-	 *
-	 * @return array
-	 * @see __construct()
-	 *
-	 * @api
-	 */
-	public function getRequiredOptions()
-	{
-		return array();
-	}
+		//Get all the placeholders to replace
+		preg_match_all('#\{\{\s*([^\}]+)\s*\}\}#', $message, $matches);
+		foreach($matches AS $k => $match){
+			$k = $matches[1][$k];
+			if($k == 'target') $k = $k.'_'.$key;
 
-	/**
-	 * Returns the name of the class that validates this constraint
-	 *
-	 * By default, this is the fully qualified name of the constraint class
-	 * suffixed with "Validator". You can override this method to change that
-	 * behaviour.
-	 *
-	 * @return string
-	 *
-	 * @api
-	 */
-	public function validatedBy()
-	{
-		$identifier = clone $this->getIdentifier();
-		$identifier->path = array('validator');
-		return $identifier->classname;
-	}
+			if($k == 'value') $replace = $value;
+			else $replace = $this->{$k};
 
-	/**
-	 * Returns whether the constraint can be put onto classes, properties or
-	 * both
-	 *
-	 * This method should return one or more of the constants
-	 * Constraint::CLASS_CONSTRAINT and Constraint::PROPERTY_CONSTRAINT.
-	 *
-	 * @return string|array  One or more constant values
-	 *
-	 * @api
-	 */
-	public function getTargets()
-	{
-		return self::PROPERTY_CONSTRAINT;
-	}
+			$message = str_replace($match, $replace, $message);
+		}
 
 
-	public function getValidator()
-	{
-		$identifier = clone $this->getIdentifier();
-		$identifier->path = 'validator';
-		return $this->getService($identifier);
+		return $message;
 	}
 }

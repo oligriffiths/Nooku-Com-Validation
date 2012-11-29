@@ -92,7 +92,6 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
         if ($item->isValidatable()) {
     		$errors = (array) $item->getValidationErrors();
 
-
 		    foreach($errors AS $key => $error)
 		    {
 			    foreach($error AS $e){
