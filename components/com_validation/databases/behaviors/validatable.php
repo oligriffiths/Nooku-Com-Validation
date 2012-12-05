@@ -261,7 +261,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 		$errors = (array) $mixer->errors;
 
 		if($key){
-			$return = isset($errors[$key]) ? $errors[$key] : array();
+			$return = isset($errors[$key]) ? (array) $errors[$key] : array();
 
 			if($clear){
 				unset($errors[$key]);
