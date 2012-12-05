@@ -70,16 +70,19 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 						$context->caller->setRedirect((string)$referrer );
 					}
 
-                    $errors = (array) $item->getValidationErrors();
-                    $text = '';
-                    foreach($errors AS $column => $error)
-                    {
-                        foreach($error AS $e)
+                    if (KRequest::format() !== 'html') {
+                        $errors = (array) $item->getValidationErrors();
+                        $text = '';
+                        foreach($errors AS $column => $error)
                         {
-                            $text .= 'Validation error: ('.$column.') : '.$e.' -- ';
+                            foreach($error AS $e)
+                            {
+                                $text .= 'Validation error: ('.$column.') : '.$e.' -- ';
+                            }
                         }
+                        $this->setResponse($context, KHttpResponse::BAD_REQUEST, $text);
                     }
-                    $this->setResponse($context, KHttpResponse::BAD_REQUEST, $text);
+
 
 					return false;
 				}
