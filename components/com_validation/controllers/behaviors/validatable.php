@@ -16,7 +16,7 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 	 */
 	public function execute($name, KCommandContext $context)
 	{
-		if(in_array($name, array('before.add','before.edit','before.apply','before.save'))){
+		if(in_array($name, array('before.add','before.edit'))){
 			return $this->validate($context);
 		}
 
@@ -54,7 +54,7 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 
 		if( $item )
 		{
-			$item->setData(KConfig::unbox($context->data), false);
+			$item->setData(KConfig::unbox($context->data));
 			if($item->isValidatable())
 			{
 				try{
