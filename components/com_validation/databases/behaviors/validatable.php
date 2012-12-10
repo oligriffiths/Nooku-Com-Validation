@@ -17,8 +17,9 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	 */
 	protected $_constraints_table;
 
-
 	protected $_constraints;
+
+	protected $_isValid = array();
 
 	/**
 	 * @var array
@@ -204,6 +205,9 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 			throw new KDatabaseException(__FUNCTION__.' may only be called on a KObjectArray');
 		}
 
+		//Check if the item is already validated
+		if(null !== $valid = $this->isValid(null, false)) return $valid;
+
 		//Clear any previous errors
 		$hash = spl_object_hash($mixer);
 		$this->_errors[$hash] = array();
@@ -226,6 +230,9 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         
 		$result = $set->validate($data);
 		$errors = $set->getErrors();
+
+		//Store the result
+		$this->isValid($result);
 
 		//Store the errors
 		$this->_errors[$hash] = $errors;
@@ -254,6 +261,43 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 		}
 
 		return $result;
+	}
+
+
+	/**
+	 * Checks if a mixer is previously set as valid
+	 * A hash of the object and the data is used incase the data has changed
+	 * @param null $valid
+	 * @return null|object
+	 */
+	public function isValid($valid = null, $doValidation = true)
+	{
+		$mixer = $this->getMixer();
+		$data = array_intersect_key($mixer->getData(), $this->getConstraints());
+
+		ksort($data);
+		unset($data['errors']);
+		$hash = md5(spl_object_hash($mixer) . serialize($data));
+
+		//If valid is not null, we're setting
+		if($valid !== null){
+			$this->_isValid[$hash] = (bool) $valid;
+			return $mixer;
+		}
+
+		//Check if this item has been validated before
+		if(isset($this->_isValid[$hash])) return $this->_isValid[$hash];
+
+		//If validation is required, run and return result
+		if($doValidation){
+			try{
+				return $this->validate();
+			}catch(KException $e){
+				return false;
+			}
+		}
+
+		return null;
 	}
 
 
