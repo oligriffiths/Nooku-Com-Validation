@@ -16,7 +16,7 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 	 */
 	public function execute($name, KCommandContext $context)
 	{
-		if(in_array($name, array('before.add','before.edit','before.apply','before.save'))){
+		if(in_array($name, array('before.add','before.edit'))){
 			return $this->validate($context);
 		}
 
@@ -70,6 +70,20 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 						$context->caller->setRedirect((string)$referrer );
 					}
 
+                    if (KRequest::format() !== 'html') {
+                        $errors = (array) $item->getValidationErrors();
+                        $text = '';
+                        foreach($errors AS $column => $error)
+                        {
+                            foreach($error AS $e)
+                            {
+                                $text .= 'Validation error: ('.$column.') : '.$e.' -- ';
+                            }
+                        }
+                        $this->setResponse($context, KHttpResponse::BAD_REQUEST, $text);
+                    }
+
+
 					return false;
 				}
 			}
@@ -105,4 +119,26 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
             }
 		}
 	}
+
+
+    protected function setResponse(KCommandContext $context, $code, $message, $headers = array())
+    {
+        if($context->response){
+            if(!$context->response->getStatus()){
+                $context->response->setStatus(
+                    $code, $message
+                );
+
+                foreach($headers AS $key => $msg) $context->response->headers->set($key, $msg);
+            }
+        }else{
+            if(!$context->getError()){
+                $context->setError(new KControllerException(
+                    $message, $code
+                ));
+
+                $context->headers = array_merge(is_array($context->headers) ? $context->headers : array(), $headers);
+            }
+        }
+    }
 }
