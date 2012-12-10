@@ -54,7 +54,7 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 
 		if( $item )
 		{
-			$item->setData(KConfig::unbox($context->data), false);
+			$item->setData(KConfig::unbox($context->data));
 			if($item->isValidatable())
 			{
 				try{
