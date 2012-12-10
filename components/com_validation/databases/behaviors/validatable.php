@@ -213,7 +213,17 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
         //Validate the data
         $data = $mixer->getData();
-        $data = $mixer instanceof KDatabaseRowAbstract && $mixer->getTable() ? $mixer->getTable()->filter($data, true) : $data;
+
+        if($mixer instanceof KDatabaseRowAbstract && $table = $mixer->getTable()){
+
+            // Filter data based on column type
+            foreach($data as $key => $value){
+                if($column = $table->getColumn($key)) {
+                    $data[$key] = $column->filter->sanitize($value);
+                }
+            }
+        }
+        
 		$result = $set->validate($data);
 		$errors = $set->getErrors();
 
