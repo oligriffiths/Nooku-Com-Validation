@@ -20,7 +20,7 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 			return $this->validate($context);
 		}
 
-		if(in_array($name, array('after.get')))
+		if(in_array($name, array('after.validate')))
 		{
 			$this->raiseErrors($context);
 		}
@@ -64,24 +64,11 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 					//Redirect to the referring page
 					$referrer = KRequest::referrer();
 					if($referrer){
-						$query = $referrer->query;
-						$query['id'] = $item->id;
-						$referrer->query = $query;
+//						$query = $referrer->query;
+//						$query['id'] = $item->id;
+//						$referrer->query = $query;
 						$context->caller->setRedirect((string)$referrer );
 					}
-
-                    if (KRequest::format() !== 'html') {
-                        $errors = (array) $item->getValidationErrors();
-                        $text = '';
-                        foreach($errors AS $column => $error)
-                        {
-                            foreach($error AS $e)
-                            {
-                                $text .= 'Validation error: ('.$column.') : '.$e.' -- ';
-                            }
-                        }
-                        $this->setResponse($context, KHttpResponse::BAD_REQUEST, $text);
-                    }
 
 
 					return false;
@@ -99,27 +86,37 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 	 */
 	protected function raiseErrors(KCommandContext $context)
 	{
+
 		$model = $context->caller->getModel();
 		$item = $model->getItem();
 
 
-        if ($item->isValidatable()) {
-    		$errors = (array) $item->getValidationErrors();
+        if ($item->isValidatable() && $errors = (array) $item->getValidationErrors()) {
+
+            $text = '';
+            $isHtml = KRequest::format() == 'html';
 
 		    foreach($errors AS $key => $error)
 		    {
 			    foreach($error AS $e){
-				    $msg = 'Error: ('.KInflector::humanize($key).') - '.$e;
-				    if(class_exists('KMessage')){
-					    KMessage::setMessage($msg, 'error', $item->getIdentifier(), $key);
-				    }else if(class_exists('JApplication')){
-					    JFactory::getApplication()->enqueueMessage($msg,'error');
-				    }
+                    if($isHtml){
+                        $msg = 'Error: ('.KInflector::humanize($key).') - '.$e;
+                        if(class_exists('KMessage')){
+                            KMessage::setMessage($msg, 'error', $item->getIdentifier(), $key);
+                        }else if(class_exists('JApplication')){
+                            JFactory::getApplication()->enqueueMessage($msg,'error');
+                        }
+                    }else{
+                        $text .= 'Validation error: ('.$key.') : '.$e.' -- ';
+                    }
 			    }
             }
-		}
-	}
 
+            if(!$isHtml) $this->setResponse($context, KHttpResponse::BAD_REQUEST, $text);
+
+		}
+
+	}
 
     protected function setResponse(KCommandContext $context, $code, $message, $headers = array())
     {
