@@ -11,13 +11,11 @@
 
 
 /**
- * @Annotation
+ * @author Bernhard Schussek <bschussek@gmail.com>
  *
  * @api
  */
-class ComValidationConstraintEmail extends ComValidationConstraintDefault
+class ComValidationValidatorDatetime extends ComValidationValidatorDate
 {
-    public $message = 'This value is not a valid email address.';
-    public $checkMX = false;
-    public $checkHost = false;
+    const PATTERN = '/^(\d{4})-(\d{2})-(\d{2}) (0[0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/';
 }

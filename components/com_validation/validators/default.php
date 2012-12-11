@@ -23,26 +23,29 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
-			'constraint' => null,
-			'filter' => $this->getService('com://site/validation.filter.'.$this->getIdentifier()->name)
+			'constraint' => null
 		));
+
+		if(!isset($config->filter)) $config->filter = $this->getService('com://site/validation.filter.'.$this->getIdentifier()->name, $config->constraint ? $config->constraint->getOptions()->toArray() : array());
 		parent::_initialize($config);
 	}
 
 
 	/**
-	 * Stub implementation delegating to the deprecated isValid method.
+	 * Validate a value against the constraint
 	 *
 	 * @see ComValidationValidatorInterface::validate
 	 */
 	public function validate($value, $constraint = null)
 	{
-		$result = $this->_filter->validate($value);
 		$constraint = $constraint ?: $this->_constraint;
+		$result = $this->_filter->validate($value, $constraint);
 		if(!$result){
 			$message = $constraint->getMessage($value);
 			throw new KException($message);
 		}
+
+		return true;
 	}
 
 

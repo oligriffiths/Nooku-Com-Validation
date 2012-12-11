@@ -26,13 +26,17 @@ class ComValidationConstraintDefault extends KObject
 		}
 
 		//Store options
-		$this->_options = $config->options;
+		$this->_options = $config;
+		unset($this->_options->service_identifier);
+		unset($this->_options->service_container);
+		unset($this->_options->validator_options);
+		unset($this->_options->validator);
 
 		//Ensure all required options are set
 		$required = $this->getRequiredOptions();
 		foreach($required AS $key){
 			if(!isset($this->_options->$key)){
-				throw new KException('A required option ('.$key.') for the constraint '.$this->getIdentifier()->name.'  was not supplied');
+				throw new KException('A required option ('.$key.') for the constraint "'.$this->getIdentifier()->name.'" was not supplied');
 			}
 		}
 	}
@@ -40,10 +44,8 @@ class ComValidationConstraintDefault extends KObject
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
-			'options' => array(
-				'message' => '{{ target }} {{ value }} is not a valid '.$this->getIdentifier()->name,
-				'message_target' => 'The value'
-			),
+			'message' => '{{ target }} is not a valid {{ type }}, "{{ value }}" given',
+			'message_target' => 'This value',
 			'validator_options' => array(),
 			'validator' => null
 		));
@@ -70,6 +72,16 @@ class ComValidationConstraintDefault extends KObject
 	public function getRequiredOptions()
 	{
 		return array('message');
+	}
+
+
+	/**
+	 * Returns the options set for the constraint
+	 * @return mixed
+	 */
+	public function getOptions()
+	{
+		return $this->_options;
 	}
 
 
@@ -114,15 +126,16 @@ class ComValidationConstraintDefault extends KObject
 	 */
 	public function getMessage($value = null, $key = 'message')
 	{
-		$message = $this->$key;
+		$message = JText::_($this->$key);
 
 		//Get all the placeholders to replace
 		preg_match_all('#\{\{\s*([^\}]+)\s*\}\}#', $message, $matches);
-		foreach($matches AS $k => $match){
+		foreach($matches[0] AS $k => $match){
 			$k = trim($matches[1][$k]);
-			if($k == 'target') $k = $key.'_'.$k;
+			if($k == 'target') $k = JText::_($key.'_'.$k);
 
 			if($k == 'value') $replace = $value;
+			else if($k == 'type') $replace = $this->getIdentifier()->name;
 			else $replace = $this->_options->{$k};
 
 			$message = str_replace($match, $replace, $message);
