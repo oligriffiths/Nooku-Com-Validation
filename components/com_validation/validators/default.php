@@ -1,15 +1,5 @@
 <?php
 
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 /**
  * Base class for constraint validators
  *
@@ -17,7 +7,7 @@
  *
  * @api
  */
-class ComValidationValidatorDefault extends KObject implements ComValidationValidatorInterface, KServiceInstantiatable
+class ComValidationValidatorDefault extends KObject implements ComValidationValidatorInterface
 {
 	protected $_constraint;
 	protected $_filter;
@@ -34,31 +24,9 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 	{
 		$config->append(array(
 			'constraint' => null,
-			'filter' => $this->getService('com:default.filter.'.$this->getIdentifier()->name)
+			'filter' => $this->getService('com://site/validation.filter.'.$this->getIdentifier()->name)
 		));
 		parent::_initialize($config);
-	}
-
-
-	/**
-	 * Force creation of a singleton
-	 *
-	 * @param 	object 	An optional KConfig object with configuration options
-	 * @param 	object	A KServiceInterface object
-	 * @return KDatabaseTableDefault
-	 */
-	public static function getInstance(KConfigInterface $config, KServiceInterface $container)
-	{
-		// Check if an instance with this identifier already exists or not
-		if (!$container->has($config->service_identifier))
-		{
-			//Create the singleton
-			$classname = $config->service_identifier->classname;
-			$instance  = new $classname($config);
-			$container->set($config->service_identifier, $instance);
-		}
-
-		return $container->get($config->service_identifier);
 	}
 
 
@@ -70,8 +38,9 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 	public function validate($value, $constraint = null)
 	{
 		$result = $this->_filter->validate($value);
+		$constraint = $constraint ?: $this->_constraint;
 		if(!$result){
-			$message = $this->_constraint->getMessage($value);
+			$message = $constraint->getMessage($value);
 			throw new KException($message);
 		}
 	}

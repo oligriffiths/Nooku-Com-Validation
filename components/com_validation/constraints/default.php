@@ -21,15 +21,17 @@ class ComValidationConstraintDefault extends KObject
 			$this->_validator = $config->validator;
 			$this->_validator->setConstraint($this);
 		}
-		else $this->_validator_options = $config->validator_options->toArray();
+		else{
+			$this->_validator_options = $config->validator_options->toArray();
+		}
 
 		//Store options
-		$this->_options = $config->options->toArray();
+		$this->_options = $config->options;
 
 		//Ensure all required options are set
 		$required = $this->getRequiredOptions();
 		foreach($required AS $key){
-			if(!isset($this->_options[$key])){
+			if(!isset($this->_options->$key)){
 				throw new KException('A required option ('.$key.') for the constraint '.$this->getIdentifier()->name.'  was not supplied');
 			}
 		}
@@ -38,14 +40,12 @@ class ComValidationConstraintDefault extends KObject
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
-			array(
-				'options' => array(
-					'message' => '{{ target }} is not a valid '.$this->getIdentifier()->name,
-					'message_target' => 'This value'
-				),
-				'validator_options' => array(),
-				'validator' => null
-			)
+			'options' => array(
+				'message' => '{{ target }} {{ value }} is not a valid '.$this->getIdentifier()->name,
+				'message_target' => 'The value'
+			),
+			'validator_options' => array(),
+			'validator' => null
 		));
 
 		parent::_initialize($config);
@@ -58,15 +58,20 @@ class ComValidationConstraintDefault extends KObject
 	 */
 	function __get($name)
 	{
-		if(isset($this->_options[$name])) return $this->_options[$name];
+		if(isset($this->_options->$name)) return $this->_options->$name;
 		return null;
 	}
 
 
+	/**
+	 * Returns the options that are required for this constraint to be valid
+	 * @return array
+	 */
 	public function getRequiredOptions()
 	{
 		return array('message');
 	}
+
 
 	/**
 	 * Get the object handle
@@ -81,6 +86,12 @@ class ComValidationConstraintDefault extends KObject
 		return $this->getIdentifier()->name;
 	}
 
+
+	/**
+	 * Returns the validator for this constraint
+	 * @param array $options - optional constructor options for the validator
+	 * @return mixed|object
+	 */
 	public function getValidator($options = array())
 	{
 		if(!$this->_validator){
@@ -108,16 +119,22 @@ class ComValidationConstraintDefault extends KObject
 		//Get all the placeholders to replace
 		preg_match_all('#\{\{\s*([^\}]+)\s*\}\}#', $message, $matches);
 		foreach($matches AS $k => $match){
-			$k = $matches[1][$k];
-			if($k == 'target') $k = $k.'_'.$key;
+			$k = trim($matches[1][$k]);
+			if($k == 'target') $k = $key.'_'.$k;
 
 			if($k == 'value') $replace = $value;
-			else $replace = $this->{$k};
+			else $replace = $this->_options->{$k};
 
 			$message = str_replace($match, $replace, $message);
 		}
 
 
 		return $message;
+	}
+
+
+	public function validate($value)
+	{
+		return $this->getValidator()->validate($value);
 	}
 }

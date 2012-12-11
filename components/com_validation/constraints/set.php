@@ -20,7 +20,7 @@ class ComValidationConstraintSet extends KObjectSet
 		{
 			if($validator = $constraint->getValidator())
 			{
-				return $validator->validate($value, $constraint);
+				return $validator->validate($value);
 			}
 		}
 
