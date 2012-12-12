@@ -11,9 +11,12 @@ class ComValidationConstraintCount extends ComValidationConstraintDefault
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
+			'min' => null,
+			'max' => null,
 			'message_exact' => 'This collection should contain exactly {{ min }} elements, {{ value }} given',
 			'message_min' => 'This collection should contain {{ min }} elements or more, {{ value }} given',
 			'message_max' => 'This collection should contain {{ max }} elements or less, {{ value }} given',
+			'value_type' => 'array'
 		));
 		parent::_initialize($config);
 	}
@@ -25,6 +28,6 @@ class ComValidationConstraintCount extends ComValidationConstraintDefault
 	 */
 	public function getRequiredOptions()
 	{
-		return array('message','min','max');
+		return array('message_exact','message_min','message_max','min','max');
 	}
 }

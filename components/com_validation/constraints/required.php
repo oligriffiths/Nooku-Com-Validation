@@ -6,12 +6,12 @@
  */
 defined('KOOWA') or die('Protected resource');
 
-class ComValidationConstraintBlank extends ComValidationConstraintDefault
+class ComValidationConstraintRequired extends ComValidationConstraintDefault
 {
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{ target }} must be blank, "{{ value }}" given',
+			'message' => '{{ target }} is required',
 		));
 		parent::_initialize($config);
 	}

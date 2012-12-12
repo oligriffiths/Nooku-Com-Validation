@@ -19,11 +19,11 @@ class ComValidationConstraintDefault extends KObject
 		//Set validator if supplied
 		if($config->validator){
 			$this->_validator = $config->validator;
-			$this->_validator->setConstraint($this);
+			if($this->_validator instanceof ComValidationValidatorInterface) $this->_validator->setConstraint($this);
 		}
-		else{
-			$this->_validator_options = $config->validator_options->toArray();
-		}
+
+		//Store validator options
+		$this->_validator_options = $config->validator_options->toArray();
 
 		//Store options
 		$this->_options = $config;
@@ -45,7 +45,10 @@ class ComValidationConstraintDefault extends KObject
 	{
 		$config->append(array(
 			'message' => '{{ target }} is not a valid {{ type }}, "{{ value }}" given',
+			'message_invalid' => '{{ target }} must be of type "{{ value_type }}", "{{ value }}" given',
 			'message_target' => 'This value',
+			'allow_null' => false,
+			'value_type' => 'scalar',
 			'validator_options' => array(),
 			'validator' => null
 		));
@@ -106,11 +109,13 @@ class ComValidationConstraintDefault extends KObject
 	 */
 	public function getValidator($options = array())
 	{
-		if(!$this->_validator){
+		if(!$this->_validator instanceof ComValidationValidatorInterface){
 			$options['constraint'] = $this;
 			$options = array_merge($this->_validator_options, $options);
 			$identifier = clone $this->getIdentifier();
 			$identifier->path = 'validator';
+			if($this->_validator) $identifier->name = $this->_validator;
+
 			$this->_validator = $this->getService($identifier, $options);
 		}
 
@@ -126,21 +131,21 @@ class ComValidationConstraintDefault extends KObject
 	 */
 	public function getMessage($value = null, $key = 'message')
 	{
-		$message = JText::_($this->$key);
+		$message = JText::_($this->_options->$key);
 
 		//Get all the placeholders to replace
 		preg_match_all('#\{\{\s*([^\}]+)\s*\}\}#', $message, $matches);
 		foreach($matches[0] AS $k => $match){
 			$k = trim($matches[1][$k]);
-			if($k == 'target') $k = JText::_($key.'_'.$k);
+			if($k == 'target') $k = 'message_target';
 
-			if($k == 'value') $replace = $value;
-			else if($k == 'type') $replace = $this->getIdentifier()->name;
+			if (is_array($value) && isset($value[$k])) $replace = $value[$k];
+			else if($k == 'value') $replace = $value;
+			else if($k == 'type' && !$this->_options->type) $replace = $this->getIdentifier()->name;
 			else $replace = $this->_options->{$k};
 
 			$message = str_replace($match, $replace, $message);
 		}
-
 
 		return $message;
 	}

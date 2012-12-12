@@ -2,17 +2,23 @@
 /**
  * Created By: Oli Griffiths
  * Date: 11/12/2012
- * Time: 12:03
+ * Time: 12:16
  */
 defined('KOOWA') or die('Protected resource');
 
-class ComValidationConstraintBlank extends ComValidationConstraintDefault
+class ComValidationConstraintRegex extends ComValidationConstraintDefault
 {
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{ target }} must be blank, "{{ value }}" given',
+			'regex' => null,
+			'value_type' => 'string'
 		));
 		parent::_initialize($config);
+	}
+
+	public function getRequiredOptions()
+	{
+		return array('message','regex');
 	}
 }

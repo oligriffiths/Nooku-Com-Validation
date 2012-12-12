@@ -27,7 +27,6 @@ interface ComValidationValidatorInterface
      */
     public function validate($value, $constraint = null);
 
-
 	/**
 	 *
 	 * @abstract
@@ -36,4 +35,12 @@ interface ComValidationValidatorInterface
 	 * @return mixed
 	 */
 	public function isValid($value, $constraint = null);
+
+
+	/**
+	 * Sets the constraint in the validator
+	 * @param ComValidationConstraintInterface $constraint
+	 * @return mixed
+	 */
+	public function setConstraint(ComValidationConstraintInterface $constraint);
 }

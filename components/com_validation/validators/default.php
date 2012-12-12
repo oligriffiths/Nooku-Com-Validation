@@ -26,8 +26,23 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 			'constraint' => null
 		));
 
-		if(!isset($config->filter)) $config->filter = $this->getService('com://site/validation.filter.'.$this->getIdentifier()->name, $config->constraint ? $config->constraint->getOptions()->toArray() : array());
+		if($config->filter !== false){
+			$filter = $config->filter ?: $this->getIdentifier()->name;
+			$config->filter = $this->getService('com://site/validation.filter.'.$filter, $config->constraint ? $config->constraint->getOptions()->toArray() : array());
+		}
 		parent::_initialize($config);
+	}
+
+
+	/**
+	 * Sets the constraint in the validator
+	 * @param ComValidationConstraintInterface $constraint
+	 * @return mixed
+	 */
+	public function setConstraint(ComValidationConstraintInterface $constraint)
+	{
+		$this->_constraint = $constraint;
+		return $this;
 	}
 
 
@@ -39,6 +54,67 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 	public function validate($value, $constraint = null)
 	{
 		$constraint = $constraint ?: $this->_constraint;
+
+		//Validate type
+		if($this->checkType($value, $constraint) === null) return true;
+
+		//Validate
+		return $this->_validate($value, $constraint);
+	}
+
+
+	/**
+	 * Checks the value conforms to the constraint value type
+	 * @param $value
+	 * @param ComValidationConstraintDefault $constraint
+	 * @return bool
+	 * @throws KException
+	 */
+	protected function checkType($value, ComValidationConstraintDefault $constraint)
+	{
+		//Check if value is null
+		if(!$constraint->allow_null && is_null($value)){
+			return null;
+		}
+
+		//Run type check on the value
+		if($constraint->value_type){
+			$result = true;
+			switch($constraint->value_type){
+				case 'string':
+					if(!(is_string($value) || is_scalar($value)) && !method_exists($value, '__toString')) $result = false;
+					break;
+
+				case 'array':
+					if(!is_array($value) && !$value instanceof \Countable) $result = false;
+					break;
+
+				default:
+					$function = 'is_'.strtolower($constraint->value_type);
+					if(function_exists($function) && !$function($value)) $result = false;
+					break;
+			}
+
+			if(!$result){
+				$message = $constraint->getMessage(gettype($value), 'message_invalid');
+				throw new KException($message);
+			}
+		}
+
+		return true;
+	}
+
+
+	/**
+	 * Validates the value using the attached filter
+	 * @param $value
+	 * @param ComValidationConstraintDefault $constraint
+	 * @return bool
+	 * @throws KException
+	 */
+	protected function _validate($value, ComValidationConstraintDefault $constraint)
+	{
+		//Validate with filter
 		$result = $this->_filter->validate($value, $constraint);
 		if(!$result){
 			$message = $constraint->getMessage($value);

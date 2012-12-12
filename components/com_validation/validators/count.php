@@ -23,14 +23,8 @@ class ComValidationValidatorCount extends ComValidationValidatorDefault
 	 *
 	 * @see ComValidationValidatorInterface::validate
 	 */
-	public function validate($value, $constraint = null)
+	protected function _validate($value, ComValidationConstraintDefault $constraint)
 	{
-		$constraint = $constraint ?: $this->_constraint;
-
-		if (null === $value) {
-			return;
-		}
-
 		if (!is_array($value) && !$value instanceof \Countable) {
 			throw new UnexpectedValueException('The value passed to '.__CLASS__.'::'.__FUNCTION__.' must be an array, or implement countable');
 		}
