@@ -153,7 +153,6 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         //Add the rows identifers
         foreach($row->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $identifier .= '.'.$row->get($column_id);
 
-        //Retrieve the data in the session to pre-populate the row
 	    //Casting as a kconfig and to array will convert and sub kconfigs back to arrays
 	    $data = new KConfig($row->getData());
         $data = $data->toArray();
