@@ -8,6 +8,8 @@ defined('KOOWA') or die('Protected resource');
 
 class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbstract
 {
+	protected $_redirect;
+
 	/**
 	 * Executes the validate action before any "save" events and raises errors on redirect
 	 * @param $name
@@ -18,6 +20,10 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 	{
 		if(in_array($name, array('before.add','before.edit'))){
 			return $this->validate($context);
+		}
+
+		if(in_array($name, array('after.add','after.edit','after.apply','after.save'))){
+			$this->setRedirect();
 		}
 
 		if(in_array($name, array('after.validate')))
@@ -51,6 +57,7 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 	{
 		$model = $context->caller->getModel();
 		$item = $model->getItem();
+		$this->_redirect = null;
 
 		if( $item )
 		{
@@ -61,15 +68,10 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 					$item->validate();
 				}catch(Exception $e)
 				{
-					//Redirect to the referring page
 					$referrer = KRequest::referrer();
 					if($referrer){
-//						$query = $referrer->query;
-//						$query['id'] = $item->id;
-//						$referrer->query = $query;
-						$context->caller->setRedirect((string)$referrer );
+						$this->_redirect = (string) $referrer;
 					}
-
 
 					return false;
 				}
@@ -81,20 +83,31 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 
 
 	/**
+	 * Sets the redirect in the mixer
+	 * This has to be called afterSave/Apply as those methods set the redirect also
+	 */
+	protected function setRedirect()
+	{
+		if($this->_redirect){
+			$this->getMixer()->setRedirect($this->_redirect);
+		}
+	}
+
+
+	/**
 	 * Raises any errors that the row contains
 	 * @param KCommandContext $context
 	 */
 	protected function raiseErrors(KCommandContext $context)
 	{
-
 		$model = $context->caller->getModel();
 		$item = $model->getItem();
-
 
         if ($item->isValidatable() && $errors = (array) $item->getValidationErrors()) {
 
             $text = '';
             $isHtml = KRequest::format() == 'html';
+	        $identifier = $item->getIdentifier();
 
 		    foreach($errors AS $key => $error)
 		    {
@@ -102,7 +115,7 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
                     if($isHtml){
                         $msg = 'Error: ('.KInflector::humanize($key).') - '.$e;
                         if(class_exists('KMessage')){
-                            KMessage::setMessage($msg, 'error', $item->getIdentifier(), $key);
+                            KMessage::setMessage($msg, 'error', $identifier, $key);
                         }else if(class_exists('JApplication')){
                             JFactory::getApplication()->enqueueMessage($msg,'error');
                         }
@@ -111,11 +124,8 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
                     }
 			    }
             }
-
             if(!$isHtml) $this->setResponse($context, KHttpResponse::BAD_REQUEST, $text);
-
 		}
-
 	}
 
     protected function setResponse(KCommandContext $context, $code, $message, $headers = array())

@@ -23,7 +23,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 		));
 		parent::__construct($config);
 
-		$this->loadConstraintsFromDB();
+		$this->loadConstraintsFromDB(array_keys($config->constraints->toArray()));
 
 		foreach($config->constraints->toArray() AS $column => $constraints)
 		{
@@ -391,30 +391,17 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
-    /**
-	 * @return mixed
-	 * @throws KDatabaseException
-	 */
-	protected function loadConstraints()
-	{
-		$this->loadConstraintsFromDB();
-		$this->_constraints = array_merge($this->_constraints_db, $this->_constraints_table);
-
-		return $this->_constraints;
-	}
-
-
 	/**
 	 * @return mixed
 	 * @throws KDatabaseException
 	 */
-	protected function loadConstraintsFromDB()
+	protected function loadConstraintsFromDB($exclude = array())
 	{
 		$mixer = $this->getMixer();
 		$columns = $mixer->getColumns();
 		foreach($columns AS $id => $column)
 		{
-			if($column->primary) continue;
+			if($column->primary || in_array($id, $exclude)) continue;
 
 			$constraint_set = array();
 
@@ -425,9 +412,9 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 			switch($column->type)
 			{
-				case 'date': $constraint_set[] = array('type' => 'date', 'allow_nulldate' => true); break;
-				case 'datetime': $constraint_set[] = array('type' => 'datetime', 'allow_nulldate' => true); break;
-				case 'time': $constraint_set[] = 'time'; break;
+				case 'date':        $constraint_set[] = array('type' => 'date', 'allow_nulldate' => true); break;
+				case 'datetime':    $constraint_set[] = array('type' => 'datetime', 'allow_nulldate' => true); break;
+				case 'time':        $constraint_set[] = 'time'; break;
 
 				case 'int':
 				case 'integer':
@@ -442,9 +429,13 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
                 case 'double precision':
                 case 'bit': // this needed here until the query object handles booleans and the database adapter
                             // handles bit columns - Oli Oct 2012
-                    $required_type = 'notnull'; //integers can be 0, notblank fails on this
-                    if($column->length == 1 && ($column->type == 'tinyint' || $column->type == 'bit')) $constraint_set['type'] = array('type' => 'boolean', 'convert_bool' => true, 'convert_string' => true);
-                    else $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
+                    if($column->length == 1 && ($column->type == 'tinyint' || $column->type == 'bit')){
+	                    $required_type = 'notnull';
+	                    $constraint_set['type'] = array('type' => 'boolean', 'convert_bool' => true, 'convert_string' => true);
+                    }
+                    else{
+	                    $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
+                    }
                 break;
 
                 case 'bool':
