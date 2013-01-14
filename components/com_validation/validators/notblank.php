@@ -22,7 +22,7 @@ class ComValidationValidatorNotblank extends ComValidationValidatorDefault
      */
     public function validate($value, ComValidationConstraintDefault $constraint)
     {
-        if (false === $value || (empty($value) && '0' != $value)) {
+        if (!$value) {
             throw new ComValidationExceptionValidator($constraint->message);
         }
     }
