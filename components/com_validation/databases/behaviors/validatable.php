@@ -113,7 +113,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
      * @param null|KDatabaseRowInterface $row
      * @return ComValidationDatabaseBehaviorValidatable
      */
-    public function loadFromSession($row = null)
+    public function loadFromSession($row = null, $clear = true)
     {
         $row = $row ? $row : $this->getMixer();
 
@@ -132,7 +132,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
                 $row->setData($prev_data);
 
                 //Clear session data
-                KRequest::set('session.data.'.$identifier, null);
+                if($clear) KRequest::set('session.data.'.$identifier, null);
             }
         }
 
