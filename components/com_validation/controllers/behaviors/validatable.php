@@ -104,7 +104,8 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 		$model = $context->caller->getModel();
 		$item = $model->getItem();
 
-        if ($item->isValidatable() && $errors = (array) $item->getValidationErrors()) {
+		$errors = (array) $item->getValidationErrors();
+        if ($item->isValidatable()) {
 
             $text = '';
             $isHtml = KRequest::format() == 'html';
@@ -129,7 +130,17 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 		}
 	}
 
-    protected function setResponse(KCommandContext $context, $code, $message, $headers = array())
+
+	/**
+	 * Sets the response in the context.
+	 * This is a 12.2/12.3 compatibility method
+	 *
+	 * @param KCommandContext $context
+	 * @param $code
+	 * @param $message
+	 * @param array $headers
+	 */
+	protected function setResponse(KCommandContext $context, $code, $message, $headers = array())
     {
         if($context->response){
             if(!$context->response->getStatus()){
