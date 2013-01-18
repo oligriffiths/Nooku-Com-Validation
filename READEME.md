@@ -50,4 +50,48 @@ the input to be an array (KFilter automatically iterates arrays and validates th
 
 --------------------------------------------------------
 
+Here is a list of the available validators (explainations provided where necessary):
+
+alnum       - alpha numeric
+alpha
+ascii
+base64
+blank
+boolean
+choice      - array of pre-defined choices
+cmd         - A 'command' is a string containing only the characters [A-Za-z0-9.-_]
+count       - counts the values in an array
+date
+digit
+email
+false
+file
+float
+identifier  - Ensure the value conforms to a URI identifier
+image
+int
+internalurl
+ip
+json
+lang        - Language code in the format en-US
+length
+max
+md5
+min
+notblank    - Ensure a value is not blank, eg 0, '', false but not null
+notnull
+null
+numeric     - Ensures a value is numeric. See KFilterNumeric for definition
+path        - Ensure the value is a string formatted as a path
+range
+regex       - Validates against the supplied regex
+required    - Alias to notblank, different message
+string
+time
+timestamp
+true
+type        - Validates the value against php's built in or any custom is_(type) method. Eg is_string, is_int. Can also check for value instanceof "class"
+url
+word        - A 'word' is a string containing only the characters [A-Za-z_]
+
 Happy coding!

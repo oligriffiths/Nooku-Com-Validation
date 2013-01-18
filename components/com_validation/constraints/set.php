@@ -7,20 +7,31 @@
 
 class ComValidationConstraintSet extends KObjectSet
 {
+	/**
+	 * Adds a constraint to the set
+	 * @param ComValidationConstraintInterface|string $constraint
+	 * @param array $options
+	 * @return ComValidationConstraintSet
+	 */
 	public function addConstraint($constraint, $options = array())
 	{
-		$this->insert($constraint instanceof ComValidationConstraintDefault ? $constraint : $this->getService('com://site/validation.constraint.'.$constraint, $options));
+		$this->insert($constraint instanceof ComValidationConstraintInterface ? $constraint : $this->getService('com://site/validation.constraint.'.$constraint, $options));
 		return $this;
 	}
 
 
+	/**
+	 * Validates all the constraints in the set
+	 * @param $value
+	 * @return bool
+	 */
 	public function validate($value)
 	{
 		foreach($this AS $constraint)
 		{
 			if($validator = $constraint->getValidator())
 			{
-				return $validator->validate($value);
+				$validator->validate($value);
 			}
 		}
 

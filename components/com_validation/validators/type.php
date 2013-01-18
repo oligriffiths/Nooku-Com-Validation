@@ -32,19 +32,19 @@ class ComValidationValidatorType extends ComValidationValidatorDefault
 				case 'long':
 				case 'integer':
 				case 'int':
-					if(preg_match('#[0-9]+#', $value)) $value = intval($value);
+					if(filter_var($value, FILTER_VALIDATE_INT) == $value) $value = filter_var($value, FILTER_VALIDATE_INT);
 					break;
 
 				case 'real':
 				case 'double':
 				case 'float':
-					if(preg_match('#[0-9]*(\.[0-9]+)?#', $value)) $value = floatval($value);
+					if(filter_var($value, FILTER_VALIDATE_FLOAT) == $value) $value = filter_var($value, FILTER_VALIDATE_FLOAT);
 					break;
 
 				case 'boolean':
 				case 'bool':
-					if(strtolower($value) == 'true' || $value == '1') $value = true;
-					if(strtolower($value) == 'false' || $value == '0') $value = false;
+					if(strtolower($value) == 'true' || $value === '1' || $value === 1) $value = true;
+					if(strtolower($value) == 'false' || $value === '0' || $value ===0) $value = false;
 					break;
 			}
 		}
