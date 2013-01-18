@@ -8,6 +8,8 @@ defined('KOOWA') or die('Protected resource');
 
 class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbstract
 {
+	protected $_redirect;
+
 	/**
 	 * Executes the validate action before any "save" events and raises errors on redirect
 	 * @param $name
@@ -20,7 +22,11 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 			return $this->validate($context);
 		}
 
-		if(in_array($name, array('after.get')))
+		if(in_array($name, array('after.add','after.edit','after.apply','after.save'))){
+			$this->setRedirect();
+		}
+
+		if(in_array($name, array('after.validate')))
 		{
 			$this->raiseErrors($context);
 		}
@@ -51,38 +57,22 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 	{
 		$model = $context->caller->getModel();
 		$item = $model->getItem();
+		$this->_redirect = null;
 
 		if( $item )
 		{
-			$item->setData(KConfig::unbox($context->data));
 			if($item->isValidatable())
 			{
+				$item->setData(KConfig::unbox($context->data));
+
 				try{
 					$item->validate();
 				}catch(Exception $e)
 				{
-					//Redirect to the referring page
 					$referrer = KRequest::referrer();
 					if($referrer){
-						$query = $referrer->query;
-						$query['id'] = $item->id;
-						$referrer->query = $query;
-						$context->caller->setRedirect((string)$referrer );
+						$this->_redirect = (string) $referrer;
 					}
-
-                    if (KRequest::format() !== 'html') {
-                        $errors = (array) $item->getValidationErrors();
-                        $text = '';
-                        foreach($errors AS $column => $error)
-                        {
-                            foreach($error AS $e)
-                            {
-                                $text .= 'Validation error: ('.$column.') : '.$e.' -- ';
-                            }
-                        }
-                        $this->setResponse($context, KHttpResponse::BAD_REQUEST, $text);
-                    }
-
 
 					return false;
 				}
@@ -90,6 +80,18 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 		}
 
 		return true;
+	}
+
+
+	/**
+	 * Sets the redirect in the mixer
+	 * This has to be called afterSave/Apply as those methods set the redirect also
+	 */
+	protected function setRedirect()
+	{
+		if($this->_redirect){
+			$this->getMixer()->setRedirect($this->_redirect);
+		}
 	}
 
 
@@ -102,25 +104,43 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 		$model = $context->caller->getModel();
 		$item = $model->getItem();
 
-        if ($item->isValidatable()) {
-    		$errors = (array) $item->getValidationErrors();
+		if ($item->isValidatable()) {
+	        $errors = (array) $item->getValidationErrors();
+
+            $text = '';
+            $isHtml = KRequest::format() == 'html';
+	        $identifier = $item->getIdentifier();
 
 		    foreach($errors AS $key => $error)
 		    {
 			    foreach($error AS $e){
-				    $msg = 'Error: ('.KInflector::humanize($key).') - '.$e;
-				    if(class_exists('KMessage')){
-					    KMessage::setMessage($msg, 'error', $item->getIdentifier(), $key);
-				    }else if(class_exists('JApplication')){
-					    JFactory::getApplication()->enqueueMessage($msg,'error');
-				    }
+                    if($isHtml){
+                        $msg = 'Error: ('.KInflector::humanize($key).') - '.$e;
+                        if(class_exists('KMessage')){
+                            KMessage::setMessage($msg, 'error', $identifier, $key);
+                        }else if(class_exists('JApplication')){
+                            JFactory::getApplication()->enqueueMessage($msg,'error');
+                        }
+                    }else{
+                        $text .= 'Validation error: ('.$key.') : '.$e.' -- ';
+                    }
 			    }
             }
+            if(!$isHtml) $this->setResponse($context, KHttpResponse::BAD_REQUEST, $text);
 		}
 	}
 
 
-    protected function setResponse(KCommandContext $context, $code, $message, $headers = array())
+	/**
+	 * Sets the response in the context.
+	 * This is a 12.2/12.3 compatibility method
+	 *
+	 * @param KCommandContext $context
+	 * @param $code
+	 * @param $message
+	 * @param array $headers
+	 */
+	protected function setResponse(KCommandContext $context, $code, $message, $headers = array())
     {
         if($context->response){
             if(!$context->response->getStatus()){

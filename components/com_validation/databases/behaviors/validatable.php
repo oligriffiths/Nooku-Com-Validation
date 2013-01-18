@@ -7,16 +7,6 @@
 
 class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 {
-	/**
-	 * @var array
-	 */
-	protected $_constraints_db;
-
-	/**
-	 * @var array
-	 */
-	protected $_constraints_table;
-
 	protected $_constraints;
 
 	protected $_isValid = array();
@@ -28,13 +18,31 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 	public function __construct(KConfig $config = null)
 	{
+		parent::__construct($config);
+
+		$this->loadConstraintsFromDB(array_keys($config->constraints->toArray()));
+
+		foreach($config->constraints->toArray() AS $column => $constraints)
+		{
+			foreach($constraints AS $key => $constraint){
+				$options = array();
+				if(is_array($key)){
+					$options = $constraint;
+					$constraint = $key;
+				}
+				$this->addConstraint($column, $constraint, $options);
+			}
+		}
+	}
+
+
+	protected function _initialize(KConfig $config)
+	{
 		$config->append(array(
 			'constraints' => array()
 		));
-		parent::__construct($config);
 
-		$this->_constraints_table = $config->constraints->toArray();
-		$this->loadConstraints();
+		parent::_initialize($config);
 	}
 
 
@@ -112,7 +120,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
      * @param null|KDatabaseRowInterface $row
      * @return ComValidationDatabaseBehaviorValidatable
      */
-    public function loadFromSession($row = null)
+    public function loadFromSession($row = null, $clear = true)
     {
         $row = $row ? $row : $this->getMixer();
 
@@ -131,7 +139,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
                 $row->setData($prev_data);
 
                 //Clear session data
-                KRequest::set('session.data.'.$identifier, null);
+                if($clear) KRequest::set('session.data.'.$identifier, null);
             }
         }
 
@@ -153,7 +161,6 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
         //Add the rows identifers
         foreach($row->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $identifier .= '.'.$row->get($column_id);
 
-        //Retrieve the data in the session to pre-populate the row
 	    //Casting as a kconfig and to array will convert and sub kconfigs back to arrays
 	    $data = new KConfig($row->getData());
         $data = $data->toArray();
@@ -220,7 +227,17 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
         //Validate the data
         $data = $mixer->getData();
-        $data = $mixer instanceof KDatabaseRowAbstract && $mixer->getTable() ? $mixer->getTable()->filter($data, true) : $data;
+
+        if($mixer instanceof KDatabaseRowAbstract && $table = $mixer->getTable()){
+
+            // Filter data based on column type
+            foreach($data as $key => $value){
+                if($column = $table->getColumn($key)) {
+                    $data[$key] = $column->filter->sanitize($value);
+                }
+            }
+        }
+        
 		$result = $set->validate($data);
 		$errors = $set->getErrors();
 
@@ -294,6 +311,33 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
+	/**
+	 * Checks if the required constraint is set
+	 * @param $column
+	 * @return bool
+	 */
+	public function isRequired($column)
+	{
+		return $this->hasConstraint('required',$column);
+	}
+
+
+	/**
+	 * Checks if a constraint is set
+	 * @param $constraint
+	 * @param $column
+	 * @return bool
+	 */
+	public function hasConstraint($constraint, $column)
+	{
+		$constraints = $this->getConstraints($column);
+		if($constraint == 'required'){
+			return isset($constraints['required']) || isset($constraints['notblank']) || isset($constraints['notnull']);
+		}
+		return isset($constraints[$constraint]);
+	}
+
+
     /**
 	 * @return array
 	 * @throws KDatabaseException
@@ -333,18 +377,12 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
      */
     public function addConstraint($column, $constraint, $options = array())
     {
-        $mixer = $this->getMixer();
-        if(!$mixer instanceof KDatabaseRowAbstract)
-        {
-            throw new KDatabaseException(__FUNCTION__.' may only be called on a KDatabaseRow');
-        }
-
         if(!isset($this->_constraints[$column])){
             $this->_constraints[$column] = array();
         }
 
         if($constraint instanceof ComValidationConstraintDefault){
-            $this->_constraints[$column][] = $constraint;
+            $this->_constraints[$column][$constraint->getHandle()] = $constraint;
         }else{
             $this->_constraints[$column][$constraint] = $options;
         }
@@ -357,22 +395,9 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	 * Returns the constraints
 	 * @return array
 	 */
-	public function getConstraints()
+	public function getConstraints($column = null)
 	{
-		return $this->_constraints;
-	}
-
-
-    /**
-	 * @return mixed
-	 * @throws KDatabaseException
-	 */
-	protected function loadConstraints()
-	{
-		$this->loadConstraintsFromDB();
-		$this->_constraints = array_merge($this->_constraints_db, $this->_constraints_table);
-
-		return $this->_constraints;
+		return $column ? (isset($this->_constraints[$column]) ? $this->_constraints[$column] : array()) :$this->_constraints;
 	}
 
 
@@ -380,79 +405,77 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	 * @return mixed
 	 * @throws KDatabaseException
 	 */
-	protected function loadConstraintsFromDB()
+	protected function loadConstraintsFromDB($exclude = array())
 	{
-		if(!isset($this->_constraints_db))
+		$mixer = $this->getMixer();
+		$columns = $mixer->getColumns();
+		foreach($columns AS $id => $column)
 		{
-			$mixer = $this->getMixer();
-			$constraints = array();
-			$columns = $mixer->getColumns();
-			foreach($columns AS $id => $column)
+			if($column->primary || in_array($id, $exclude)) continue;
+
+			$constraint_set = array();
+
+            $required_type = 'required';
+			if($column->name == 'email' || $column->name == 'email_address') $constraint_set['email'] = 'email';
+			if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set['email'] = 'ip';
+			if($column->name == 'image') $constraint_set['email'] = 'image';
+
+			switch($column->type)
 			{
-				if($column->primary) continue;
+				case 'date':        $constraint_set['type'] = array('type' => 'date', 'allow_nulldate' => true); break;
+				case 'datetime':    $constraint_set['type'] = array('type' => 'datetime', 'allow_nulldate' => true); break;
+				case 'time':        $constraint_set['type'] = array('type' => 'time'); break;
 
-				$constraint_set = array();
+				case 'int':
+				case 'integer':
+                case 'tinyint':
+                case 'smallint':
+                case 'mediumint':
+                case 'bigint':
+				case 'float':
+				case 'double':
+                case 'real':
+                case 'double':
+                case 'double precision':
+                case 'bit': // this needed here until the query object handles booleans and the database adapter
+                            // handles bit columns - Oli Oct 2012
+                    if($column->length == 1 && ($column->type == 'tinyint' || $column->type == 'bit')){
+	                    $required_type = 'notnull';
+	                    $constraint_set['type'] = array('type' => 'boolean', 'convert_bool' => true, 'convert_string' => true);
+                    }
+                    else{
+	                    $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
+                    }
+                break;
 
-                $required_type = 'notblank';
-				if($column->name == 'email' || $column->name == 'email_address') $constraint_set[] = 'email';
-				if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set[] = 'ip';
-				if($column->name == 'image') $constraint_set[] = 'image';
+                case 'bool':
+                case 'boolean':
+                    $required_type = 'notnull'; //booleans can be 0, notblank fails on this
+					$constraint_set['type'] = array('type' => 'boolean', 'convert_bool' => true);
+					break;
 
-				switch($column->type)
-				{
-					case 'date': $constraint_set[] = array('type' => 'date', 'allow_nulldate' => true); break;
-					case 'datetime': $constraint_set[] = array('type' => 'timestamp', 'allow_nulldate' => true); break;
-					case 'time': $constraint_set[] = 'time'; break;
-					case 'timestamp': $constraint_set[] = 'timestamp'; break;
-
-					case 'int':
-					case 'integer':
-                    case 'tinyint':
-                    case 'smallint':
-                    case 'mediumint':
-                    case 'bigint':
-					case 'float':
-					case 'double':
-                    case 'real':
-                    case 'double':
-                    case 'double precision':
-                    case 'bit': // this needed here until the query object handles booleans and the database adapter
-                                // handles bit columns - Oli Oct 2012
-                        $required_type = 'notnull'; //integers can be 0, notblank fails on this
-                        if($column->length == 1 && ($column->type == 'tinyint' || $column->type == 'bit')) $constraint_set['type'] = array('type' => 'boolean', 'convert_bool' => true, 'convert_string' => true);
-                        else $constraint_set['type'] = array('type' => 'numeric', 'convert_string' => true);
-                    break;
-
-                    case 'bool':
-                    case 'boolean':
-                        $required_type = 'notnull'; //integers can be 0, notblank fails on this
-						$constraint_set['type'] = array('type' => 'boolean', 'convert_bool' => true);
-						break;
-
-					case 'varchar':
-					case 'text':
-					case 'tinytext':
-					case 'mediumtext':
-					case 'longtext':
-					case 'blob':
-					case 'tinyblob':
-					case 'smallblob':
-					case 'longblob':
-                        $constraint_set['type'] = array('type' => 'string');
-						break;
-				}
-
-                if($column->required) $constraint_set[] = $required_type;
-
-				if($column->length) $constraint_set['maxlength'] = array('limit' => $column->length);
-
-				if(!empty($constraint_set)) $constraints[$id] = $constraint_set;
+				case 'varchar':
+				case 'text':
+				case 'tinytext':
+				case 'mediumtext':
+				case 'longtext':
+				case 'blob':
+				case 'tinyblob':
+				case 'smallblob':
+				case 'longblob':
+                    $constraint_set['type'] = array('type' => 'string');
+					break;
 			}
 
-			$this->_constraints_db = $constraints;
+            if($column->required) $constraint_set['required'] = $required_type;
+
+			if($column->length) $constraint_set['maxlength'] = array('limit' => $column->length);
+
+			foreach($constraint_set AS $constraint => $options){
+				$this->addConstraint($id, $constraint, $options);
+			}
 		}
 
-		//Set the mixers constraints
-		return $this->_constraints_db;
+		return $this;
 	}
 }

@@ -11,23 +11,19 @@
 
 
 /**
- * Annotation for group sequences
- *
- * @Annotation
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
  * @api
  */
-class ComValidationConstraintGroupsequence
+class ComValidationValidatorNotblank extends ComValidationValidatorDefault
 {
     /**
-     * The members of the sequence
-     * @var array
+     * {@inheritDoc}
      */
-    public $groups;
-
-    public function __construct(array $groups)
+    public function validate($value, ComValidationConstraintDefault $constraint)
     {
-        $this->groups = $groups['value'];
+        if (!$value) {
+            throw new ComValidationExceptionValidator($constraint->message);
+        }
     }
 }
