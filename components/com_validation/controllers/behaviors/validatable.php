@@ -104,8 +104,8 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 		$model = $context->caller->getModel();
 		$item = $model->getItem();
 
-		$errors = (array) $item->getValidationErrors();
-        if ($item->isValidatable()) {
+		if ($item->isValidatable()) {
+	        $errors = (array) $item->getValidationErrors();
 
             $text = '';
             $isHtml = KRequest::format() == 'html';
