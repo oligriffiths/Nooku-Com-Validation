@@ -20,8 +20,10 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	{
 		parent::__construct($config);
 
-		$this->loadConstraintsFromDB(array_keys($config->constraints->toArray()));
+		//Load DB constraints
+		if($config->load_db) $this->loadConstraintsFromDB(array_keys($config->constraints->toArray()));
 
+		//Load passed constraints
 		foreach($config->constraints->toArray() AS $column => $constraints)
 		{
 			foreach($constraints AS $key => $constraint){
@@ -39,6 +41,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
+			'load_db' => true,
 			'constraints' => array()
 		));
 
