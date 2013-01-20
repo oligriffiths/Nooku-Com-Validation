@@ -32,8 +32,9 @@ and re-populating the object after select, so no need to handle storing the data
 The concept of constraints and validators is borrowed from symphony.
 A constraint holds the meta data that is used to perform a validation.
 Constraints has types, different constraints contain different validation parameters, for example:
-    min - holds a minimum value and a specific error message should validation fail
-    image - holds mime types, min/max width/height and related error messages
+
+* min - holds a minimum value and a specific error message should validation fail
+* image - holds mime types, min/max width/height and related error messages
 
 A constraint must implement `ComValidationConstraintInterface`
 
