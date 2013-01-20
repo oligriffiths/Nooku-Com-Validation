@@ -63,7 +63,7 @@ class ComValidationConstraintDefault extends KObject
 	 */
 	function __get($name)
 	{
-		if(isset($this->_options->$name)) return $this->_options->$name;
+		if(isset($this->_options->$name)) return KConfig::unbox($this->_options->$name);
 		return null;
 	}
 

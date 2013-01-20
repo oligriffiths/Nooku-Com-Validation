@@ -16,12 +16,20 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	 */
 	protected $_errors = array();
 
+
+	/**
+	 * Constructor.
+	 *
+	 * @param 	object 	An optional KConfig object with configuration options
+	 */
 	public function __construct(KConfig $config = null)
 	{
 		parent::__construct($config);
 
 		//Load DB constraints
-		if($config->load_db) $this->loadConstraintsFromDB(array_keys($config->constraints->toArray()));
+		if($config->load_constraints){
+			$this->loadConstraintsFromDB(array_keys($config->constraints->toArray()));
+		}
 
 		//Load passed constraints
 		foreach($config->constraints->toArray() AS $column => $constraints)
@@ -38,10 +46,18 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	}
 
 
+	/**
+	 * Initializes the options for the object
+	 *
+	 * Called from {@link __construct()} as a first step of object instantiation.
+	 *
+	 * @param 	object 	An optional KConfig object with configuration options
+	 * @return void
+	 */
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
-			'load_db' => true,
+			'load_constraints' => true,
 			'constraints' => array()
 		));
 
@@ -50,6 +66,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 
 	/**
+	 * Mixin the behvior to the row, and load previous data from the session if set
+	 *
 	 * @param KCommandContext $context
 	 */
 	protected function _afterTableSelect(KCommandContext $context)
@@ -88,6 +106,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 
 	/**
+	 * Before inserting data, validate it first
+	 *
 	 * @param KCommandContext $context
 	 * @return bool
 	 */
@@ -98,6 +118,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 
 	/**
+	 * Before updating data, validate it first
+	 *
 	 * @param KCommandContext $context
 	 * @return bool
 	 */
@@ -119,7 +141,8 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 
     /**
-     * Loads a rows data in the session
+     * Loads a rows data from the session
+     *
      * @param null|KDatabaseRowInterface $row
      * @return ComValidationDatabaseBehaviorValidatable
      */
@@ -202,6 +225,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 		KRequest::set('session.data.'.$identifier, null);
 	}
+
 
 	/**
 	 * @return mixed
@@ -419,15 +443,15 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 			$constraint_set = array();
 
             $required_type = 'required';
-			if($column->name == 'email' || $column->name == 'email_address') $constraint_set['email'] = 'email';
-			if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set['email'] = 'ip';
-			if($column->name == 'image') $constraint_set['email'] = 'image';
+			if($column->name == 'email' || $column->name == 'email_address') $constraint_set['email'] = array();
+			if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set['email'] = array();
+			if($column->name == 'image') $constraint_set['email'] = array();
 
 			switch($column->type)
 			{
-				case 'date':        $constraint_set['type'] = array('type' => 'date', 'allow_nulldate' => true); break;
-				case 'datetime':    $constraint_set['type'] = array('type' => 'datetime', 'allow_nulldate' => true); break;
-				case 'time':        $constraint_set['type'] = array('type' => 'time'); break;
+				case 'date':        $constraint_set['date'] = array(); break;
+				case 'datetime':    $constraint_set['timestamp'] = array(); break;
+				case 'time':        $constraint_set['time'] = array(); break;
 
 				case 'int':
 				case 'integer':
@@ -470,9 +494,9 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 					break;
 			}
 
-            if($column->required) $constraint_set['required'] = $required_type;
+            if($column->required) $constraint_set[$required_type] = array();
 
-			if($column->length) $constraint_set['maxlength'] = array('limit' => $column->length);
+			if($column->length) $constraint_set['length'] = array('max' => $column->length);
 
 			foreach($constraint_set AS $constraint => $options){
 				$this->addConstraint($id, $constraint, $options);

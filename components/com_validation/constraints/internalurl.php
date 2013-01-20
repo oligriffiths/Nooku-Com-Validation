@@ -6,12 +6,13 @@
  */
 defined('KOOWA') or die('Protected resource');
 
-class ComValidationConstraintAlnum extends ComValidationConstraintDefault
+class ComValidationConstraintInternalurl extends ComValidationConstraintDefault
 {
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
 			'message' => '{{ target }} must be valid internal url, "{{ value }}" given',
+			'value_type' => false
 		));
 		parent::_initialize($config);
 	}

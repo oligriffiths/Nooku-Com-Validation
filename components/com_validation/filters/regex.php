@@ -16,11 +16,10 @@ class ComValidationFilterRegex extends KFilterAbstract
 
 		$this->_regex = $config->regex;
 
-		$regex = $this->_regex;
-		if( trim($regex, '#') == $regex &&
-			trim($regex, '/') == $regex &&
-			trim($regex, '@') == $regex &&
-			trim($regex, '{}') == $regex
+		if( trim($this->_regex, '#') == $this->_regex &&
+			trim($this->_regex, '/') == $this->_regex &&
+			trim($this->_regex, '@') == $this->_regex &&
+			trim($this->_regex, '{}') == $this->_regex
 		){
 			throw new KException('Regex is missing starting and ending delimiters. (Use one of # / @ {})');
 		}
@@ -45,7 +44,7 @@ class ComValidationFilterRegex extends KFilterAbstract
 	 */
 	protected function _validate($value)
 	{
-		return preg_match($this->_regex, $value);
+		return (bool) preg_match($this->_regex, $value);
 	}
 
 	/**

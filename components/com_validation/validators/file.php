@@ -160,7 +160,7 @@ class ComValidationValidatorFile extends ComValidationValidatorDefault
 			}
 		}
 
-		$mimeTypes = $constraint->mimeTypes->toArray();
+		$mimeTypes = $constraint->mimeTypes;
 		if (count($mimeTypes)) {
 
 			$mime = mime_content_type($value);

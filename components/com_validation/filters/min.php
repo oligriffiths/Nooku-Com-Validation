@@ -6,7 +6,7 @@
  */
 defined('KOOWA') or die('Protected resource');
 
-class ComValidationFilterMax extends KFilterAbstract
+class ComValidationFilterMin extends KFilterAbstract
 {
 	protected $_min;
 

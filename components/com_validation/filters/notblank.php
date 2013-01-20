@@ -6,10 +6,11 @@
  */
 defined('KOOWA') or die('Protected resource');
 
-class ComValidationFilterNotblank extends KFilterAbstract
+class ComValidationFilterNotblank extends ComValidationFilterBlank
 {
 	/**
 	 * Validate the value is not blank
+	 * A value is not blank if it is not '' and not null
 	 *
 	 * Variable passed to this function will always be a scalar
 	 *
@@ -18,7 +19,7 @@ class ComValidationFilterNotblank extends KFilterAbstract
 	 */
 	protected function _validate($value)
 	{
-		return !(false === $value || (empty($value) && '0' != $value));
+		return !parent::_validate($value);
 	}
 
 	/**

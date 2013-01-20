@@ -17,7 +17,17 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 		parent::__construct($config);
 
 		$this->_constraint = $config->constraint;
-		$this->_filter = $config->filter;
+
+		if($config->filter){
+			if(!$config->filter instanceof KServiceIdentifier && strpos($config->filter,'.') === false){
+				$identifier = clone $this->getIdentifier();
+				$identifier->path = array('filter');
+				$identifier->name = $config->filter;
+				$config->filter = $identifier;
+			}
+
+			$this->_filter = $this->getService($config->filter, $config->constraint ? $config->constraint->getOptions()->toArray() : array());
+		}
 	}
 
 	protected function _initialize(KConfig $config)
@@ -28,7 +38,7 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 
 		if($config->filter !== false){
 			$filter = $config->filter ?: $this->getIdentifier()->name;
-			$config->filter = $this->getService('com://site/validation.filter.'.$filter, $config->constraint ? $config->constraint->getOptions()->toArray() : array());
+			$config->filter = $filter;
 		}
 		parent::_initialize($config);
 	}
