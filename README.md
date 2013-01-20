@@ -61,6 +61,8 @@ Validator sets hold constraint sets by key and are used to validate an array of 
 
 --------------------------------------------------------
 
+## Validators:
+
 Here is a list of the available validators (explainations provided where necessary):
 
 alnum       - alpha numeric
