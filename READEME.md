@@ -48,6 +48,17 @@ class will be loaded. This in turn loads a corresponding KFilter from the Koowa 
 Some validators have custom implementations that can not be achieved with a filter, usually validators that require
 the input to be an array (KFilter automatically iterates arrays and validates the values)
 
+There are 2 additional types that are of importance
+
+Constraint sets:
+
+Constraint sets hold a set of constraints, and all those constraints can be validated by the validate() method
+
+Validator sets:
+
+Validator sets hold constraint sets by key and are used to validate an array of key/value pairs
+
+
 --------------------------------------------------------
 
 Here is a list of the available validators (explainations provided where necessary):

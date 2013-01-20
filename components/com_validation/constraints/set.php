@@ -7,6 +7,14 @@
 
 class ComValidationConstraintSet extends KObjectSet
 {
+	public function __construct(KConfig $config = null)
+	{
+		parent::__construct($config);
+
+		if($config->constraints) $this->addConstraints(KConfig::unbox($config->constraints));
+	}
+
+
 	/**
 	 * Adds a constraint to the set
 	 * @param ComValidationConstraintInterface|string $constraint
@@ -21,20 +29,54 @@ class ComValidationConstraintSet extends KObjectSet
 
 
 	/**
+	 * Adds multiple constraints to the set
+	 * @param $constraints
+	 */
+	public function addConstraints($constraints)
+	{
+		foreach($constraints AS $key => $constraint)
+		{
+			$options = array();
+
+			if(!$constraint instanceof ComValidationConstraintInterface){
+
+				if(is_array($constraint)){
+					$options = $constraint;
+					$constraint = $key;
+				}
+
+				if(strpos($constraint, '.') === false){
+					$identifier = clone $this->getIdentifier();
+					$identifier->name = $constraint;
+				}
+			}
+
+			$this->addConstraint($constraint, $options);
+		}
+	}
+
+
+	/**
 	 * Validates all the constraints in the set
 	 * @param $value
 	 * @return bool
 	 */
 	public function validate($value)
 	{
+		$errors = array();
+
 		foreach($this AS $constraint)
 		{
 			if($validator = $constraint->getValidator())
 			{
-				$validator->validate($value);
+				try{
+					$validator->validate($value);
+				}catch(KException $e){
+					$errors[] = $e->getMessage();
+				}
 			}
 		}
 
-		return true;
+		return empty($errors) ? true : $errors;
 	}
 }
