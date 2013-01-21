@@ -37,9 +37,39 @@ class ComValidationValidatorSet extends KObjectSet
 
 			if($constraintset instanceof ComValidationConstraintSet)
 			{
-				$this->_object_set->offsetSet($column, $constraintset);
+				$this->setConstraints($column, $constraintset);
 			}
 		}
+	}
+
+
+	/**
+	 * Returns the constraint set for a particular column
+	 *
+	 * @param string $column
+	 * @return mixed|null
+	 */
+	public function getConstraints($column)
+	{
+		if($this->_object_set->offsetExists($column)){
+			return $this->_object_set->offsetGet($column);
+		}
+
+		return null;
+	}
+
+
+	/**
+	 * Sets the constraint set against a particular column
+	 *
+	 * @param string $column
+	 * @param ComValidationConstraintSet $constraints
+	 * @return ComValidationValidatorSet
+	 */
+	public function setConstraints($column, ComValidationConstraintSet $constraints)
+	{
+		$this->_object_set->offsetSet($column, $constraints);
+		return $this;
 	}
 
 
@@ -54,7 +84,7 @@ class ComValidationValidatorSet extends KObjectSet
 		$errors = array();
 		foreach($data AS $key => $value)
 		{
-			if($constraints = $this->_object_set->offsetGet($key))
+			if($constraints = $this->getConstraints($key))
 			{
 				try{
 					$constraints->validate($value);
