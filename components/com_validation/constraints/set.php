@@ -57,6 +57,32 @@ class ComValidationConstraintSet extends KObjectSet
 
 
 	/**
+	 * Returns a constraint by name if exists
+	 * @param $constraint
+	 * @return mixed|null
+	 */
+	public function getConstraint($constraint)
+	{
+		if($this->hasConstraint($constraint)){
+			return $this->_object_set->offsetGet($constraint);
+		}
+
+		return null;
+	}
+
+
+	/**
+	 * Returns true if constraint exists
+	 * @param $constraint
+	 * @return bool
+	 */
+	public function hasConstraint($constraint)
+	{
+		return $this->_object_set->offsetExists($constraint);
+	}
+
+
+	/**
 	 * Validates all the constraints in the set
 	 * @param $value
 	 * @return bool
