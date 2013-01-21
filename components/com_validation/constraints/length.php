@@ -1,42 +1,37 @@
 <?php
-
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 /**
- * @Annotation
- *
- * @api
+ * Created By: Oli Griffiths
+ * Date: 11/12/2012
+ * Time: 12:44
  */
+defined('KOOWA') or die('Protected resource');
+
 class ComValidationConstraintLength extends ComValidationConstraintDefault
 {
-    public $maxMessage = 'This value is too long. It should have {{ limit }} characters or less.';
-    public $minMessage = 'This value is too short. It should have {{ limit }} characters or more.';
-    public $exactMessage = 'This value should have exactly {{ limit }} characters.';
-    public $max;
-    public $min;
-    public $charset = 'UTF-8';
+	/**
+	 * Supply the min and max values as parameters. Values are inclusive
+	 * @param KConfig $config
+	 */
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'min' => null,
+			'max' => null,
+			'message_exact' => 'This value should contain exactly {{ min }} characters, {{ value }} given',
+			'message_min' => 'This value is too short. It should have {{ min }} characters or more, {{ value }} given',
+			'message_max' => 'This value is too long. It should have {{ max }} characters or less, {{ value }} given',
+			'charset' => 'UTF-8'
+		));
+		parent::_initialize($config);
+	}
 
-    public function __construct($options = null)
-    {
-        if (null !== $options && !is_array($options)) {
-            $options = array(
-                'min' => $options,
-                'max' => $options,
-            );
-        }
 
-        parent::__construct($options);
-
-        if (null === $this->min && null === $this->max) {
-            throw new MissingOptionsException('Either option "min" or "max" must be given for constraint ' . __CLASS__, array('min', 'max'));
-        }
-    }
+	/**
+	 * Returns the options that are required for this constraint to be valid
+	 * @return array
+	 */
+	public function getRequiredOptions()
+	{
+		return array('message_exact','message_max','message_min','min','max');
+	}
 }

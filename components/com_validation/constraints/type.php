@@ -1,41 +1,26 @@
 <?php
-
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
-
 /**
- * @Annotation
- *
- * @api
+ * Created By: Oli Griffiths
+ * Date: 11/12/2012
+ * Time: 13:08
  */
+defined('KOOWA') or die('Protected resource');
+
 class ComValidationConstraintType extends ComValidationConstraintDefault
 {
-    public $message = 'This value should be of type {{ type }}.';
-    public $type;
-    public $convert_string = false; //Allows a string to be converted is it is numeric
-    public $convert_bool = false; // Allows values of 0/1/ to be converted to boolean
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'type' => null,
+			'convert_string' => false,
+			'convert_bool' => false,
+			'message' => '{{ target }} is not a valid {{ type }}, "{{ value }}" given'
+		));
+		parent::_initialize($config);
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getDefaultOption()
-    {
-        return 'type';
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getRequiredOptions()
-    {
-        return array('type');
-    }
+	public function getRequiredOptions()
+	{
+		return array('message','type');
+	}
 }

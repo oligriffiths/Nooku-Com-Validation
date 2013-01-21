@@ -1,21 +1,18 @@
 <?php
-
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 /**
- * @Annotation
- *
- * @api
+ * Created By: Oli Griffiths
+ * Date: 11/12/2012
+ * Time: 12:03
  */
+defined('KOOWA') or die('Protected resource');
+
 class ComValidationConstraintNotblank extends ComValidationConstraintDefault
 {
-    public $message = 'This value should not be blank.';
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'message' => '{{ target }} must not be blank',
+		));
+		parent::_initialize($config);
+	}
 }

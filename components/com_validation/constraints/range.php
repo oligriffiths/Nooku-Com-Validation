@@ -1,36 +1,35 @@
 <?php
-
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
-use Symfony\Component\Validator\Exception\MissingOptionsException;
-
 /**
- * @Annotation
- *
- * @api
+ * Created By: Oli Griffiths
+ * Date: 11/12/2012
+ * Time: 12:44
  */
+defined('KOOWA') or die('Protected resource');
+
 class ComValidationConstraintRange extends ComValidationConstraintDefault
 {
-    public $minMessage = 'This value should be {{ limit }} or more.';
-    public $maxMessage = 'This value should be {{ limit }} or less.';
-    public $invalidMessage = 'This value should be a valid number.';
-    public $min;
-    public $max;
+	/**
+	 * Supply the min and max values as parameters. Values are inclusive
+	 * @param KConfig $config
+	 */
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'min' => null,
+			'max' => null,
+			'message_min' => 'This value should be {{ min }} or more, {{ value }} given',
+			'message_max' => 'This value should be {{ max }} or less, {{ value }} given',
+		));
+		parent::_initialize($config);
+	}
 
-    public function __construct($options = null)
-    {
-        parent::__construct($options);
 
-        if (null === $this->min && null === $this->max) {
-            throw new MissingOptionsException('Either option "min" or "max" must be given for constraint ' . __CLASS__, array('min', 'max'));
-        }
-    }
+	/**
+	 * Returns the options that are required for this constraint to be valid
+	 * @return array
+	 */
+	public function getRequiredOptions()
+	{
+		return array('message_max','message_min','min','max');
+	}
 }

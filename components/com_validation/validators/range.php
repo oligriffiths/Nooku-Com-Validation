@@ -1,51 +1,47 @@
 <?php
 
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 /**
+ * Base class for constraint validators
+ *
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @api
  */
 class ComValidationValidatorRange extends ComValidationValidatorDefault
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($value, ComValidationConstraintDefault $constraint)
-    {
-        if (null === $value) {
-            return;
-        }
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'filter' => false
+		));
+		parent::_initialize($config);
+	}
 
-        if (!is_numeric($value)) {
-            throw new ComValidationExceptionValidator($constraint->invalidMessage, array(
-                '{{ value }}' => $value,
-            ));
 
-            return;
-        }
+	/**
+	 * Validate a value against the constraint
+	 *
+	 * @see ComValidationValidatorInterface::validate
+	 */
+	protected function _validate($value, ComValidationConstraintDefault $constraint)
+	{
+		$message = null;
+		if ($constraint->min == $constraint->max && $value != $constraint->min) {
+			$message = $constraint->getMessage($value, 'message_exact');
+		}
 
-        if (null !== $constraint->max && $value > $constraint->max) {
-            throw new ComValidationExceptionValidator($constraint->maxMessage, array(
-                '{{ value }}' => $value,
-                '{{ limit }}' => $constraint->max,
-            ));
+		if (null !== $constraint->max && $value > $constraint->max) {
+			$message = $constraint->getMessage($value, 'message_max');
+		}
 
-            return;
-        }
+		if (null !== $constraint->min && $value < $constraint->min) {
+			$message = $constraint->getMessage($value, 'message_min');
+		}
 
-        if (null !== $constraint->min && $value < $constraint->min) {
-            throw new ComValidationExceptionValidator($constraint->minMessage, array(
-                '{{ value }}' => $value,
-                '{{ limit }}' => $constraint->min,
-            ));
-        }
-    }
+		if($message !== null){
+			throw new KException($message);
+		}
+
+		return true;
+	}
 }

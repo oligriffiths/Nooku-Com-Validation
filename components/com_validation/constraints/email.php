@@ -1,23 +1,19 @@
 <?php
-
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 /**
- * @Annotation
- *
- * @api
+ * Created By: Oli Griffiths
+ * Date: 11/12/2012
+ * Time: 13:08
  */
+defined('KOOWA') or die('Protected resource');
+
 class ComValidationConstraintEmail extends ComValidationConstraintDefault
 {
-    public $message = 'This value is not a valid email address.';
-    public $checkMX = false;
-    public $checkHost = false;
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'message' => '{{ target }} is not a valid email address, "{{ value }}" given'
+		));
+		parent::_initialize($config);
+	}
+
 }

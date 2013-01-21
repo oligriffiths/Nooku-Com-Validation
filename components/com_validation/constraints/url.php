@@ -1,23 +1,19 @@
 <?php
-
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
-
 /**
- * @Annotation
- *
- * @api
+ * Created By: Oli Griffiths
+ * Date: 11/12/2012
+ * Time: 12:03
  */
+defined('KOOWA') or die('Protected resource');
+
 class ComValidationConstraintUrl extends ComValidationConstraintDefault
 {
-    public $message = 'This value is not a valid URL.';
-    public $protocols = array('http', 'https');
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'message' => '{{ target }} must be valid url, "{{ value }}" given',
+			'value_type' => false
+		));
+		parent::_initialize($config);
+	}
 }

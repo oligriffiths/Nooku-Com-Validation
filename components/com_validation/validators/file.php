@@ -1,147 +1,194 @@
 <?php
 
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 /**
+ * This file is a modified version of the Symphony file validator, part of the Symfony package.
+ *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
  * @api
  */
 class ComValidationValidatorFile extends ComValidationValidatorDefault
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($value, ComValidationConstraintDefault $constraint)
-    {
-        if (null === $value || '' === $value) {
-            return;
-        }
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'filter' => false
+		));
+		parent::_initialize($config);
+	}
 
-        if ($value instanceof UploadedFile && !$value->isValid()) {
-            switch ($value->getError()) {
-                case UPLOAD_ERR_INI_SIZE:
-                    $maxSize = UploadedFile::getMaxFilesize();
-                    $maxSize = $constraint->maxSize ? min($maxSize, $constraint->maxSize) : $maxSize;
-                    throw new ComValidationExceptionValidator($constraint->uploadIniSizeErrorMessage, array(
-                        '{{ limit }}' => $maxSize,
-                        '{{ suffix }}' => 'bytes',
-                    ));
 
-                    return;
-                case UPLOAD_ERR_FORM_SIZE:
-                    throw new ComValidationExceptionValidator($constraint->uploadFormSizeErrorMessage);
+	/**
+	 * Validate a file against the constraint
+	 *
+	 * @see ComValidationConstraintFile for constraint options
+	 * @param string|array $value - this can be either a file path or an array from $_FILES
+	 * @param ComValidationConstraintDefault $constraint
+	 * @return bool
+	 * @throws KException
+	 */
+	protected function _validate($value, ComValidationConstraintDefault $constraint)
+	{
+		if (null === $value || '' === $value) {
+			return;
+		}
 
-                    return;
-                case UPLOAD_ERR_PARTIAL:
-                    throw new ComValidationExceptionValidator($constraint->uploadPartialErrorMessage);
+		$message = null;
 
-                    return;
-                case UPLOAD_ERR_NO_FILE:
-                    throw new ComValidationExceptionValidator($constraint->uploadNoFileErrorMessage);
+		if (is_array($value)) {
+			$value = new KConfig($value);
 
-                    return;
-                case UPLOAD_ERR_NO_TMP_DIR:
-                    throw new ComValidationExceptionValidator($constraint->uploadNoTmpDirErrorMessage);
+			$message = null;
+			if($value->error){
+				switch ($value->error) {
+					case UPLOAD_ERR_INI_SIZE:
+						$uploadSize = ini_get('upload_max_filesize');
+						$maxSize = $constraint->maxSize;
 
-                    return;
-                case UPLOAD_ERR_CANT_WRITE:
-                    throw new ComValidationExceptionValidator($constraint->uploadCantWriteErrorMessage);
+						$uploadFormat = strtoupper(substr($uploadSize, -1, 1));
+						switch($uploadFormat){
+							case 'G': $upload = (float) substr($uploadSize, 0, -1) * 1024 * 1024 * 1024; break;
+							case 'M': $upload = (float) substr($uploadSize, 0, -1) * 1024 * 1024; break;
+							case 'K': $upload = (float) substr($uploadSize, 0, -1) * 1024; break;
+							default: $upload = $uploadSize; $uploadFormat = ''; break;
+						}
 
-                    return;
-                case UPLOAD_ERR_EXTENSION:
-                    throw new ComValidationExceptionValidator($constraint->uploadExtensionErrorMessage);
+						$maxFormat = strtoupper(substr($constraint->maxSize, -1, 1));
+						switch($maxFormat){
+							case 'G': $max = (float) substr($constraint->maxSize, 0, -1) * 1024 * 1024 * 1024; break;
+							case 'M': $max = (float) substr($constraint->maxSize, 0, -1) * 1024 * 1024; break;
+							case 'K': $max = (float) substr($constraint->maxSize, 0, -1) * 1024; break;
+							default: $max = $constraint->maxSize; $maxFormat = ''; break;
+						}
 
-                    return;
-                default:
-                    throw new ComValidationExceptionValidator($constraint->uploadErrorMessage);
+						$max = $max ? min($upload, $max) : $upload;
+						$format = $max == $upload ? $uploadFormat : $maxFormat;
 
-                    return;
-            }
-        }
+						switch($format){
+							case 'G': $max = $max / 1024 / 1024 / 1024; break;
+							case 'M': $max = $max / 1024 / 1024; break;
+							case 'K': $max = $max / 1024; break;
+						}
 
-        if (!is_scalar($value) && !$value instanceof FileObject && !(is_object($value) && method_exists($value, '__toString'))) {
-            throw new ComValidationExceptionUnexpectedtype($value, 'string');
-        }
+						$message = $constraint->getMessage(array(
+							'limit' => $max,
+							'suffix' => $format.'B',
+						), 'uploadIniSizeErrorMessage');
+						break;
 
-        $path = $value instanceof FileObject ? $value->getPathname() : (string) $value;
+					case UPLOAD_ERR_FORM_SIZE:
+						$message = $constraint->uploadFormSizeErrorMessage;
+						break;
 
-        if (!is_file($path)) {
-            throw new ComValidationExceptionValidator($constraint->notFoundMessage, array('{{ file }}' => $path));
+					case UPLOAD_ERR_PARTIAL:
+						$message = $constraint->uploadPartialErrorMessage;
+						break;
 
-            return;
-        }
+					case UPLOAD_ERR_NO_FILE:
+						$message = $constraint->uploadNoFileErrorMessage;
+						break;
 
-        if (!is_readable($path)) {
-            throw new ComValidationExceptionValidator($constraint->notReadableMessage, array('{{ file }}' => $path));
+					case UPLOAD_ERR_NO_TMP_DIR:
+						$message = $constraint->uploadNoTmpDirErrorMessage;
+						break;
 
-            return;
-        }
+					case UPLOAD_ERR_CANT_WRITE:
+						$message = $constraint->uploadCantWriteErrorMessage;
+						break;
 
-        if ($constraint->maxSize) {
-            if (ctype_digit((string) $constraint->maxSize)) {
-                $size = filesize($path);
-                $limit = $constraint->maxSize;
-                $suffix = 'bytes';
-            } elseif (preg_match('/^(\d+)k$/', $constraint->maxSize, $matches)) {
-                $size = round(filesize($path) / 1000, 2);
-                $limit = $matches[1];
-                $suffix = 'kB';
-            } elseif (preg_match('/^(\d+)M$/', $constraint->maxSize, $matches)) {
-                $size = round(filesize($path) / 1000000, 2);
-                $limit = $matches[1];
-                $suffix = 'MB';
-            } else {
-                throw new ConstraintDefinitionException(sprintf('"%s" is not a valid maximum size', $constraint->maxSize));
-            }
+					case UPLOAD_ERR_EXTENSION:
+						$message = $constraint->uploadExtensionErrorMessage;
+						break;
 
-            if ($size > $limit) {
-                throw new ComValidationExceptionValidator($constraint->maxSizeMessage, array(
-                    '{{ size }}'    => $size,
-                    '{{ limit }}'   => $limit,
-                    '{{ suffix }}'  => $suffix,
-                    '{{ file }}'    => $path,
-                ));
+					default:
+						$message = $constraint->uploadErrorMessage;
+						break;
+				}
+			}
 
-                return;
-            }
-        }
+			if($message){
+				throw new KException($message);
+			}
 
-        if ($constraint->mimeTypes) {
+			return true;
+		}
 
-            $mimeTypes = (array) $constraint->mimeTypes;
-	        $mime = mime_content_type($value);
-            $valid = false;
+		if (!is_scalar($value) && !(is_object($value) && method_exists($value, '__toString'))) {
+			$message = $constraint->getMessage(array('value_type' => 'string', 'value' => gettype($value)), 'message_invalid');
+			throw new KException($message);
+		}
 
-            foreach ($mimeTypes as $mimeType) {
-                if ($mimeType === $mime) {
-                    $valid = true;
-                    break;
-                }
+		$path = (string) $value;
+		if (!is_file($path)) {
+			throw new KException($constraint->getMessage($path, 'notFoundMessage'));
+			return;
+		}
 
-                if ($discrete = strstr($mimeType, '/*', true)) {
-                    if (strstr($mime, '/', true) === $discrete) {
-                        $valid = true;
-                        break;
-                    }
-                }
-            }
+		if (!is_readable($path)) {
+			throw new KException($constraint->getMessage($path, 'notReadableMessage'));
+			return;
+		}
 
-            if (false === $valid) {
-                throw new ComValidationExceptionValidator($constraint->mimeTypesMessage, array(
-                    '{{ type }}'    => '"'.$mime.'"',
-                    '{{ types }}'   => '"'.implode('", "', $mimeTypes) .'"',
-                    '{{ file }}'    => $path,
-                ));
-            }
-        }
-    }
+		if ($constraint->maxSize) {
+
+			$format = strtoupper(substr($constraint->maxSize, -1, 1));
+			$limit = (float) substr($constraint->maxSize, 0, -1);
+			switch($format){
+				case 'G':
+					$size = round(filesize($path) / 1024 / 1024 / 1024, 2);
+					break;
+				case 'M':
+					$size = round(filesize($path) / 1024 / 1024, 2);
+					break;
+				case 'K':
+					$size = round(filesize($path) / 1024, 2);
+					break;
+				default:
+					$limit = $constraint->maxSize;
+					$format = '';
+					$size = filesize($path);
+					break;
+			}
+
+			if ($size > $limit) {
+				throw new KException($constraint->getMessage(array(
+					'size'    => $size,
+					'limit'   => $limit,
+					'suffix'  => $format.'B',
+					'file'    => $path,
+				), 'maxSizeMessage'));
+			}
+		}
+
+		$mimeTypes = $constraint->mimeTypes;
+		if (count($mimeTypes)) {
+
+			$mime = mime_content_type($value);
+			$valid = false;
+
+			foreach ($mimeTypes as $mimeType) {
+				if ($mimeType === $mime) {
+					$valid = true;
+					break;
+				}
+
+				if ($discrete = strstr($mimeType, '/*', true)) {
+					if (strstr($mime, '/', true) === $discrete) {
+						$valid = true;
+						break;
+					}
+				}
+			}
+
+			if (false === $valid) {
+				throw new KException($constraint->getMessage(array(
+					'type'    => '"'.$mime.'"',
+					'types'   => '"'.implode('", "', $mimeTypes) .'"',
+					'file'    => $path,
+				), 'mimeTypesMessage'));
+			}
+		}
+
+		return true;
+	}
 }

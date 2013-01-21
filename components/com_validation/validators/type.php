@@ -1,79 +1,82 @@
 <?php
 
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 /**
+ * Base class for constraint validators
+ *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
  * @api
  */
 class ComValidationValidatorType extends ComValidationValidatorDefault
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($value, ComValidationConstraintDefault $constraint)
-    {
-        if (null === $value) {
-            return;
-        }
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'filter' => false
+		));
+		parent::_initialize($config);
+	}
 
-        if($constraint->convert_string && is_string($value))
-        {
-            switch($constraint->type)
-            {
-                case 'long':
-                case 'integer':
-                case 'int':
-                    if(preg_match('#[0-9]+#', $value)) $value = intval($value);
-                    break;
 
-                case 'real':
-                case 'double':
-                case 'float':
-                    if(preg_match('#[0-9]+(\.[0-9]+)?#', $value)) $value = floatval($value);
-                    break;
+	/**
+	 * Validate a value against the constraint
+	 *
+	 * @see ComValidationValidatorInterface::validate
+	 */
+	protected function _validate($value, ComValidationConstraintDefault $constraint)
+	{
+		if($constraint->convert_string && is_string($value))
+		{
+			switch($constraint->type)
+			{
+				case 'long':
+				case 'integer':
+				case 'int':
+					if(filter_var($value, FILTER_VALIDATE_INT) == $value) $value = filter_var($value, FILTER_VALIDATE_INT);
+					break;
 
-                case 'boolean':
-                case 'bool':
-                    if(strtolower($value) == 'true' || $value == '1') $value = true;
-                    if(strtolower($value) == 'false' || $value == '0') $value = false;
-                    break;
-            }
-        }
+				case 'real':
+				case 'double':
+				case 'float':
+					if(filter_var($value, FILTER_VALIDATE_FLOAT) == $value) $value = filter_var($value, FILTER_VALIDATE_FLOAT);
+					break;
 
-        if ($constraint->convert_bool) {
-            if ($value == '0') {
-                $value = false;
-            } else if ($value == '1') {
-                $value = true;
-            }
-        }
+				case 'boolean':
+				case 'bool':
+					if(strtolower($value) == 'true' || $value === '1' || $value === 1) $value = true;
+					if(strtolower($value) == 'false' || $value === '0' || $value ===0) $value = false;
+					break;
+			}
+		}
 
-        $type = strtolower($constraint->type);
-        $type = $type == 'boolean' ? 'bool' : $constraint->type;
-        $isFunction = 'is_'.$type;
-        $ctypeFunction = 'ctype_'.$type;
+		if ($constraint->convert_bool) {
+			if ($value === 0) {
+				$value = false;
+			} else if ($value === 1) {
+				$value = true;
+			}
+		}
 
-        if (function_exists($isFunction) && call_user_func($isFunction, $value)) {
-            return;
-        } elseif (function_exists($ctypeFunction) && call_user_func($ctypeFunction, $value)) {
-            return;
-        } elseif ($value instanceof $constraint->type) {
-            return;
-        }
+		$type = strtolower($constraint->type);
+		$type = $type == 'boolean' ? 'bool' : $type;
+		$isFunction = 'is_'.$type;
+		$ctypeFunction = 'ctype_'.$type;
 
-        throw new ComValidationExceptionValidator($constraint->message, array(
-            '{{ value }}' => is_object($value) ? get_class($value) : (is_array($value) ? 'Array' : (string) $value),
-            '{{ type }}'  => $constraint->type,
-        ));
-    }
+
+		$result = false;
+		if (function_exists($isFunction) && call_user_func($isFunction, $value)) {
+			$result = true;
+		} elseif (function_exists($ctypeFunction) && call_user_func($ctypeFunction, $value)) {
+			$result = true;
+		} elseif ($value instanceof $constraint->type) {
+			$result = true;
+		}
+
+		if(!$result){
+			$message = $constraint->getMessage(gettype($value));
+			throw new KException($message);
+		}
+
+		return true;
+	}
 }

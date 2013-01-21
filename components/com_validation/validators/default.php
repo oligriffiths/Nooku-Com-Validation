@@ -1,15 +1,5 @@
 <?php
 
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 /**
  * Base class for constraint validators
  *
@@ -17,36 +7,132 @@
  *
  * @api
  */
-class ComValidationValidatorDefault extends KObject implements ComValidationValidatorInterface, KServiceInstantiatable
+class ComValidationValidatorDefault extends KObject implements ComValidationValidatorInterface
 {
-	/**
-	 * Force creation of a singleton
-	 *
-	 * @param 	object 	An optional KConfig object with configuration options
-	 * @param 	object	A KServiceInterface object
-	 * @return KDatabaseTableDefault
-	 */
-	public static function getInstance(KConfigInterface $config, KServiceInterface $container)
-	{
-		// Check if an instance with this identifier already exists or not
-		if (!$container->has($config->service_identifier))
-		{
-			//Create the singleton
-			$classname = $config->service_identifier->classname;
-			$instance  = new $classname($config);
-			$container->set($config->service_identifier, $instance);
-		}
+	protected $_constraint;
+	protected $_filter;
 
-		return $container->get($config->service_identifier);
+	public function __construct(KConfig $config = null)
+	{
+		parent::__construct($config);
+
+		$this->_constraint = $config->constraint;
+
+		if($config->filter){
+			if(!$config->filter instanceof KServiceIdentifier && strpos($config->filter,'.') === false){
+				$identifier = clone $this->getIdentifier();
+				$identifier->path = array('filter');
+				$identifier->name = $config->filter;
+				$config->filter = $identifier;
+			}
+
+			$this->_filter = $this->getService($config->filter, $config->constraint ? $config->constraint->getOptions()->toArray() : array());
+		}
+	}
+
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'constraint' => null
+		));
+
+		if($config->filter !== false){
+			$filter = $config->filter ?: $this->getIdentifier()->name;
+			$config->filter = $filter;
+		}
+		parent::_initialize($config);
 	}
 
 
 	/**
-	 * Stub implementation delegating to the deprecated isValid method.
+	 * Sets the constraint in the validator
+	 * @param ComValidationConstraintInterface $constraint
+	 * @return mixed
+	 */
+	public function setConstraint(ComValidationConstraintInterface $constraint)
+	{
+		$this->_constraint = $constraint;
+		return $this;
+	}
+
+
+	/**
+	 * Validate a value against the constraint
 	 *
 	 * @see ComValidationValidatorInterface::validate
 	 */
-	public function validate($value, ComValidationConstraintDefault $constraint){}
+	public function validate($value, $constraint = null)
+	{
+		$constraint = $constraint ?: $this->_constraint;
+
+		//Validate type
+		if($this->checkType($value, $constraint) === null) return true;
+
+		//Validate
+		return $this->_validate($value, $constraint);
+	}
+
+
+	/**
+	 * Checks the value conforms to the constraint value type
+	 * @param $value
+	 * @param ComValidationConstraintDefault $constraint
+	 * @return bool
+	 * @throws KException
+	 */
+	protected function checkType($value, ComValidationConstraintDefault $constraint)
+	{
+		//Check if value is null
+		if(!$constraint->allow_null && is_null($value)){
+			return null;
+		}
+
+		//Run type check on the value
+		if($constraint->value_type){
+			$result = true;
+			switch($constraint->value_type){
+				case 'string':
+					if(!(is_string($value) || is_scalar($value)) && !method_exists($value, '__toString')) $result = false;
+					break;
+
+				case 'array':
+					if(!is_array($value) && !$value instanceof \Countable) $result = false;
+					break;
+
+				default:
+					$function = 'is_'.strtolower($constraint->value_type);
+					if(function_exists($function) && !$function($value)) $result = false;
+					break;
+			}
+
+			if(!$result){
+				$message = $constraint->getMessage(gettype($value), 'message_invalid');
+				throw new KException($message);
+			}
+		}
+
+		return true;
+	}
+
+
+	/**
+	 * Validates the value using the attached filter
+	 * @param $value
+	 * @param ComValidationConstraintDefault $constraint
+	 * @return bool
+	 * @throws KException
+	 */
+	protected function _validate($value, ComValidationConstraintDefault $constraint)
+	{
+		//Validate with filter
+		$result = $this->_filter->validate($value, $constraint);
+		if(!$result){
+			$message = $constraint->getMessage($value);
+			throw new KException($message);
+		}
+
+		return true;
+	}
 
 
 	/**
@@ -56,18 +142,11 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 	 */
 	public function isValid($value, $constraint = null)
 	{
-		if(!$constraint instanceof ComValidationConstraintDefault)
-		{
-			$identifier = clone $this->getIdentifier();
-			$identifier->path = 'constraint';
-			$constraint = $this->getService($identifier, is_array($constraint) ? $constraint : array());
-		}
-
 		try{
 			$this->validate($value, $constraint);
 			return true;
 
-		}catch(ComValidationExceptionValidator $e)
+		}catch(KException $e)
 		{
 			return false;
 		}
