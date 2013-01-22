@@ -392,6 +392,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	 */
 	public function hasConstraint($constraint, $column)
 	{
+        if(is_null($column)) return false;
 		$constraints = $this->getConstraints($column);
 		if(!$constraints) return false;
 
