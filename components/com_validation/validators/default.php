@@ -11,6 +11,7 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 {
 	protected $_constraint;
 	protected $_filter;
+	protected $_error;
 
 	public function __construct(KConfig $config = null)
 	{
@@ -64,6 +65,9 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 	public function validate($value, $constraint = null)
 	{
 		$constraint = $constraint ?: $this->_constraint;
+
+		//Clear any previous errors
+		$this->_error = null;
 
 		//Validate type
 		if($this->checkType($value, $constraint) === null) return true;
@@ -148,7 +152,19 @@ class ComValidationValidatorDefault extends KObject implements ComValidationVali
 
 		}catch(KException $e)
 		{
+			$this->_error = $e->getMessage();
 			return false;
 		}
+	}
+
+
+	/**
+	 * Returns any cached error message
+	 *
+	 * @return mixed
+	 */
+	public function getError()
+	{
+		return $this->_error;
 	}
 }

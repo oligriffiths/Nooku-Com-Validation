@@ -215,7 +215,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 		//Validate the data
 		$result = $set->validate($data);
-		$errors = $set->getErrors();
+		$errors = $result === true ? array() : $set->getErrors();
 
 		//Store the result
 		$this->isValid($result);
@@ -503,7 +503,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
             if($column->required) $constraint_set[$required_type] = array();
 
-			if($column->length) $constraint_set['max'] = array('max' => $column->length);
+			if($column->length) $constraint_set['length'] = array('max' => $column->length);
 
 			foreach($constraint_set AS $constraint => $options){
 				$this->addConstraint($id, $constraint, $options);

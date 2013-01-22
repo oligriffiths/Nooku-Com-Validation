@@ -15,7 +15,7 @@ class ComValidationConstraintLength extends ComValidationConstraintDefault
 	protected function _initialize(KConfig $config)
 	{
 		$config->append(array(
-			'min' => null,
+			'min' => 0,
 			'max' => null,
 			'message_exact' => 'This value should contain exactly {{ min }} characters, {{ value }} given',
 			'message_min' => 'This value is too short. It should have {{ min }} characters or more, {{ value }} given',

@@ -47,7 +47,7 @@ class ComValidationValidatorSet extends KObjectSet
 	 * Returns the constraint set for a particular column
 	 *
 	 * @param string $column
-	 * @return mixed|null
+	 * @return ComValidationConstraintSet|null
 	 */
 	public function getConstraints($column)
 	{
@@ -86,13 +86,8 @@ class ComValidationValidatorSet extends KObjectSet
 		{
 			if($constraints = $this->getConstraints($key))
 			{
-				try{
-					$constraints->validate($value);
-				}catch(Exception $e)
-				{
-					if(!isset($errors[$key])) $errors[$key] = array();
-
-					$errors[$key][] = $e->getMessage();
+				if(!$constraints->validate($value)){
+					$errors[$key] = $constraints->getErrors();
 				}
 			}
 		}

@@ -151,8 +151,29 @@ class ComValidationConstraintDefault extends KObject
 	}
 
 
+	/**
+	 * Validates the data against the constraint
+	 *
+	 * Throws KException on failure
+	 *
+	 * @param $value
+	 * @throws KException
+	 * @return mixed
+	 */
 	public function validate($value)
 	{
 		return $this->getValidator()->validate($value);
+	}
+
+
+	/**
+	 * Validates the data against the constraint, returns true on success, false on fail
+	 *
+	 * @param $value
+	 * @return bool
+	 */
+	public function isValid($value)
+	{
+		return $this->getValidator()->isValid($value);
 	}
 }

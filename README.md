@@ -108,10 +108,11 @@ Here is a list of the available validators (explainations provided where necessa
 	url
 	word        <- A 'word' is a string containing only the characters [A-Za-z_]
 
+The specific parameters (e.g. length requires a max parameter) required for each constraint can be viewed by looking at the _initialize method of the class or default class in the constraints folder. If no class exists, it requires no parameters.
+
+Note: With the exception of null and notnull, null values will not be validated unless 'allow_null' => true is passed through to the constraint config.
+
 ## Usage
-
-Validators can be used in a few ways.
-
 
 ### Behaviors
 
@@ -171,3 +172,66 @@ To do so add the behavior in the _initialize method of the controller:
 		))
 	}
 	
+#### Custom uses
+
+Constraints and validators can also be used in a stand alone mode for any time you wish to validate some data. All you need to do it get an instance of the constraint, and call validate on the constraint, passing your data value in.
+
+E.g.:
+
+	<?php
+	
+	$this->getService('com://site/validation.constraint.email')->validate('test@test.com');
+	
+If the email address is valid, true will be returned, else an exception will be thrown.
+
+For simple validation that just required true/false without the error itself;
+
+	<?php
+	
+	$valid = $this->getService('com://site/validation.constraint.email')->isValid('test@test.com');
+	
+The exception will be caught and true/false returned. To access the specific error that was thrown, call `getError()` on the constraint;
+
+##### Constraint sets
+
+Constraints can also be added to a constraint set; a group on constraints upon which a value can be validated against. All constraints in the set must validate for the set to be valid.
+
+	<?php
+	
+	$set = $this->getService('com://site/validation.constraint.set', array(
+		'constraints' => array(
+			'com://site/validation.constraint.email',
+			'com://site/validation.constraint.length' => array('min' => 0, 'max' => 150)
+		)
+	));
+	
+	$valid = $set->validate('test@test.com');
+	$errors = $set->getErrors();
+	
+You can also add constraints to an existing set by calling `$set->addConstraint()`
+
+`$set->validate()` will return true/false for success/failure. The specific errors raised can be retrieved using `$set->getErrors()`;
+
+##### Validator sets
+
+Validator sets hold multiple constraint sets by key name. An array of data can then be validated against the constraint sets, each key of the data array corresponds to a key holding a constraint set.
+
+For the validator set to be valid, all constraint sets must validate/return true;
+
+	<?php
+	
+	$set = $this->getService('com://site/validation.validator.set', 
+		array('constraints' => 
+			'email' => array('com://site/validation.constraint.email'),
+			'name' => array('com://site/validation.constraint.length' => array('min' => 0, 'max' => 150))
+		)
+	));
+	
+	$valid = $set->validate(array('email' => 'test@test.com', 'name' => 'Jon Doe'));
+	$errors = $set->getErrors();
+	
+The above will validate an array/iterable object with the keys email and name, against the constraints passed in to the validator set.
+
+`$set->validate()` will return true/false on success/failure. The specific errors raised can be retrieved using `$set->getErrors()`;
+
+

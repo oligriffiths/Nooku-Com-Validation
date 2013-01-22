@@ -7,6 +7,8 @@
 
 class ComValidationConstraintSet extends KObjectSet
 {
+	protected $_errors;
+
 	public function __construct(KConfig $config = null)
 	{
 		parent::__construct($config);
@@ -89,7 +91,7 @@ class ComValidationConstraintSet extends KObjectSet
 	 */
 	public function validate($value)
 	{
-		$errors = array();
+		$this->_errors = array();
 
 		foreach($this AS $constraint)
 		{
@@ -98,11 +100,33 @@ class ComValidationConstraintSet extends KObjectSet
 				try{
 					$validator->validate($value);
 				}catch(KException $e){
-					$errors[] = $e->getMessage();
+					$this->_errors[] = $e->getMessage();
 				}
 			}
 		}
 
-		return empty($errors) ? true : $errors;
+		return empty($this->_errors) ? true : false;
+	}
+
+
+	/**
+	 * Alias to $this->validate()
+	 *
+	 * @param $value
+	 * @return bool
+	 */
+	public function isValid($value)
+	{
+		return $this->validate($value);
+	}
+
+
+	/**
+	 * Return any errors raised
+	 * @return mixed
+	 */
+	public function getErrors()
+	{
+		return $this->_errors;
 	}
 }
