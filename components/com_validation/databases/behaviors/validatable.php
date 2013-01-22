@@ -28,7 +28,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 
 		//Load DB constraints
 		if($config->load_constraints){
-			$this->loadConstraintsFromDB(array_keys($config->constraints->toArray()));
+			$this->loadConstraintsFromDB($config->replace ? array_keys($config->constraints->toArray()) : array());
 		}
 
 		//Load passed constraints
@@ -58,6 +58,7 @@ class ComValidationDatabaseBehaviorValidatable extends KDatabaseBehaviorAbstract
 	{
 		$config->append(array(
 			'load_constraints' => true,
+			'replace' => false,
 			'constraints' => array()
 		));
 

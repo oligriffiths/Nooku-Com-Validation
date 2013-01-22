@@ -108,4 +108,66 @@ Here is a list of the available validators (explainations provided where necessa
 	url
 	word        <- A 'word' is a string containing only the characters [A-Za-z_]
 
-Happy coding!
+## Usage
+
+Validators can be used in a few ways.
+
+
+### Behaviors
+
+#### Database behavior
+This will automatically create constraints for different column names and types, and perform validation before insert and update.
+
+To attach the behavior to one of your tables, add the following to the table _initialize method:
+
+	:::php
+	
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'behaviors' => array(
+				'com://site/validation.database.behavior.validatable'
+			)
+		))
+	}
+	
+If validation fails, an exception will be thrown.
+
+You can attach additional custom constraints for each column in the table by passing through a constraints property to the behavior. Each key of the constraints array corresponds to a column in the table. The value of this property should be an array of constraints being attached.
+
+	:::php
+
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'behaviors' => array(
+				'com://site/validation.database.behavior.validatable' => array(
+					'constraints' => array(
+						'password' => array('md5')
+					)
+				)
+			)
+		))
+	}
+
+The example above attached the MD5 constraint to the password column.
+
+Note: passing through a constraint for a column will cause the constraints loaded from the database to be merged with the custom constraints. To surpress this functionality pass 'replace' => true through.
+
+#### Controller Behavior
+
+If you are attaching the database behavior, it is advised to also attached the controller behavior so that errors thrown by the database behavior are caught, and the appropriate redirect is set.
+
+To do so add the behavior in the _initialize method of the controller:
+
+	:::php
+	
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'behaviors' => array(
+				'com://site/validation.controller.behavior.validatable'
+			)
+		))
+	}
+	
