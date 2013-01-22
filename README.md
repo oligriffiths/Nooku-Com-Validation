@@ -120,7 +120,7 @@ This will automatically create constraints for different column names and types,
 
 To attach the behavior to one of your tables, add the following to the table _initialize method:
 
-	:::php
+	<?php
 	
 	protected function _initialize(KConfig $config)
 	{
@@ -135,7 +135,7 @@ If validation fails, an exception will be thrown.
 
 You can attach additional custom constraints for each column in the table by passing through a constraints property to the behavior. Each key of the constraints array corresponds to a column in the table. The value of this property should be an array of constraints being attached.
 
-	:::php
+	<?php
 
 	protected function _initialize(KConfig $config)
 	{
@@ -160,7 +160,7 @@ If you are attaching the database behavior, it is advised to also attached the c
 
 To do so add the behavior in the _initialize method of the controller:
 
-	:::php
+	<?php
 	
 	protected function _initialize(KConfig $config)
 	{
