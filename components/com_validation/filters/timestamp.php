@@ -8,6 +8,25 @@ defined('KOOWA') or die('Protected resource');
 
 class ComValidationFilterTimestamp extends KFilterTimestamp
 {
+	protected $_allow_blank;
+
+	public function __construct(KConfig $config)
+	{
+		parent::__construct($config);
+
+		$this->_allow_blank = $config->allow_blank;
+	}
+
+
+	protected function _initialize(KConfig $config)
+	{
+		$config->append(array(
+			'allow_blank' => false
+		));
+		parent::_initialize($config);
+	}
+
+
 	/**
 	 * Validates that the value is an ISO 8601 timestamp string.
 	 *
@@ -31,6 +50,11 @@ class ComValidationFilterTimestamp extends KFilterTimestamp
 		// correct length?
 		if (strlen($value) != 19) {
 			return false;
+		}
+
+		//Allow blank timestamps?
+		if($this->_allow_blank && $value == '0000-00-00 00:00:00'){
+			return true;
 		}
 
 		// valid date?

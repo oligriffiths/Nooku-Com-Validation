@@ -19,7 +19,8 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 	public function execute($name, KCommandContext $context)
 	{
 		if(in_array($name, array('before.add','before.edit'))){
-			return $this->validate($context);
+			$new_context = clone $context;
+			return $this->validate($new_context);
 		}
 
 		if(in_array($name, array('after.add','after.edit','after.apply','after.save'))){
@@ -28,7 +29,8 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 
 		if(in_array($name, array('after.validate')))
 		{
-			$this->raiseErrors($context);
+			$new_context = clone $context;
+			$this->raiseErrors($new_context);
 		}
 		return parent::execute($name, $context);
 	}
