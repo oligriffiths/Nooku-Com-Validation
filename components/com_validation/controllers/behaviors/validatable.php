@@ -106,11 +106,12 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 		$model = $context->caller->getModel();
 		$item = $model->getItem();
 
-		if ($item->isValidatable()) {
-	        $errors = (array) $item->getValidationErrors();
+        $errors = (array) $item->getValidationErrors();
 
+		if ($item->isValidatable() && !empty($errors))
+        {
             $text = '';
-            $isHtml = KRequest::format() == 'html';
+            $isHtml = KRequest::format() == 'html' || is_null(KRequest::format());
 	        $identifier = $item->getIdentifier();
 
 		    foreach($errors AS $key => $error)
@@ -128,6 +129,9 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
                     }
 			    }
             }
+
+            // If the request is not an HTML request send a 400 Bad Request response with error text set
+            // Only do this if errors are set
             if(!$isHtml) $this->setResponse($context, KHttpResponse::BAD_REQUEST, $text);
 		}
 	}
