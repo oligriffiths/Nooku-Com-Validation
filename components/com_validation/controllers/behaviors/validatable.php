@@ -110,7 +110,7 @@ class ComValidationControllerBehaviorValidatable extends KControllerBehaviorAbst
 	        $errors = (array) $item->getValidationErrors();
 
             $text = '';
-            $isHtml = KRequest::format() == 'html';
+            $isHtml = KRequest::format() == 'html' || is_null(KRequest::format());
 	        $identifier = $item->getIdentifier();
 
 		    foreach($errors AS $key => $error)
