@@ -59,9 +59,10 @@ class ComValidationFilterTimestamp extends KFilterTimestamp
 
 		// valid date?
 		$date = substr($value, 0, 10);
-		if (! $this->getService('koowa:filter.date')->validate($date)) {
-			return false;
-		}
+        //Removing validation on null dates as this breaks on createable and modifiable behaviours
+//		if (! $this->getService('koowa:filter.date')->validate($date)) {
+//			return false;
+//		}
 
 		// valid separator?
 		$sep = substr($value, 10, 1);
