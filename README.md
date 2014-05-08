@@ -1,5 +1,5 @@
 --------------------------------------------------------
-# Validation component for Nooku Framework 13.1
+# Validation component for Nooku Framework 0.9
 --------------------------------------------------------
 
 The component consists of 4 major parts
