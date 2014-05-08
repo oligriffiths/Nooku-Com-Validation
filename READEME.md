@@ -35,7 +35,7 @@ Constraints has types, different constraints contain different validation parame
     min - holds a minimum value and a specific error message should validation fail
     image - holds mime types, min/max width/height and related error messages
 
-A constraint must implement ComValidationConstraintInterface
+A constraint must implement ConstraintInterface
 
 
 Validators:
