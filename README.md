@@ -1,5 +1,5 @@
 --------------------------------------------------------
-# Validation component for Nooku Framework 12.2+
+# Validation component for Nooku Framework 13.1
 --------------------------------------------------------
 
 The component consists of 4 major parts
@@ -36,7 +36,7 @@ Constraints has types, different constraints contain different validation parame
 * min - holds a minimum value and a specific error message should validation fail
 * image - holds mime types, min/max width/height and related error messages
 
-A constraint must implement `ComValidationConstraintInterface`
+A constraint must implement `Nooku\Component\Validation\ConstraintInterface`
 
 
 ## Validators:
@@ -44,10 +44,10 @@ A constraint must implement `ComValidationConstraintInterface`
 A validator is where the leg work happens for validation.
 Validators take a value and a constraint, and validate the value against the constraints parameters.
 If validation fails, validators must throw an exception with the specific error message or true on success.
-If a validator does not have a specific implementation (class oin the validators folder) then the default validator
-class will be loaded. This in turn loads a corresponding KFilter from the Koowa package.
+If a validator does not have a specific implementation (class in the validators folder) then the default validator
+class will be loaded. This in turn loads a corresponding Filter from the Nooku library.
 Some validators have custom implementations that can not be achieved with a filter, usually validators that require
-the input to be an array (KFilter automatically iterates arrays and validates the values)
+the input to be an array (Nooku filters automatically iterate arrays and validate the values)
 
 There are 2 additional types that are of importance
 
@@ -72,7 +72,7 @@ Here is a list of the available validators (explainations provided where necessa
 	base64
 	blank
 	boolean
-	choice      <- array of pre-defined choices
+	choice      <- array of pre-defined choices, e.g. ENUM columns
 	cmd         <- A 'command' is a string containing only the characters [A-Za-z0-9.-_]
 	count       <- counts the values in an array
 	date
@@ -123,11 +123,11 @@ To attach the behavior to one of your tables, add the following to the table _in
 
 	<?php
 	
-	protected function _initialize(KConfig $config)
+	protected function _initialize(\Nooku\Library\Config $config)
 	{
 		$config->append(array(
 			'behaviors' => array(
-				'com://site/validation.database.behavior.validatable'
+				'com:validation.database.behavior.validatable'
 			)
 		))
 	}
@@ -138,11 +138,11 @@ You can attach additional custom constraints for each column in the table by pas
 
 	<?php
 
-	protected function _initialize(KConfig $config)
+	protected function _initialize(\Nooku\Library\Config $config)
 	{
 		$config->append(array(
 			'behaviors' => array(
-				'com://site/validation.database.behavior.validatable' => array(
+				'com:validation.database.behavior.validatable' => array(
 					'constraints' => array(
 						'password' => array('md5')
 					)
@@ -163,11 +163,11 @@ To do so add the behavior in the _initialize method of the controller:
 
 	<?php
 	
-	protected function _initialize(KConfig $config)
+	protected function _initialize(\Nooku\Library\Config $config)
 	{
 		$config->append(array(
 			'behaviors' => array(
-				'com://site/validation.controller.behavior.validatable'
+				'com:validation.controller.behavior.validatable'
 			)
 		))
 	}
@@ -180,7 +180,7 @@ E.g.:
 
 	<?php
 	
-	$this->getService('com://site/validation.constraint.email')->validate('test@test.com');
+	$this->getObject('com:validation.constraint.email')->validate('test@test.com');
 	
 If the email address is valid, true will be returned, else an exception will be thrown.
 
@@ -188,7 +188,7 @@ For simple validation that just required true/false without the error itself;
 
 	<?php
 	
-	$valid = $this->getService('com://site/validation.constraint.email')->isValid('test@test.com');
+	$valid = $this->getObject('com:validation.constraint.email')->isValid('test@test.com');
 	
 The exception will be caught and true/false returned. To access the specific error that was thrown, call `getError()` on the constraint;
 
@@ -198,10 +198,10 @@ Constraints can also be added to a constraint set; a group on constraints upon w
 
 	<?php
 	
-	$set = $this->getService('com://site/validation.constraint.set', array(
+	$set = $this->getObject('com:validation.constraint.set', array(
 		'constraints' => array(
-			'com://site/validation.constraint.email',
-			'com://site/validation.constraint.length' => array('min' => 0, 'max' => 150)
+			'com:validation.constraint.email',
+			'com:validation.constraint.length' => array('min' => 0, 'max' => 150)
 		)
 	));
 	
@@ -220,10 +220,10 @@ For the validator set to be valid, all constraint sets must validate/return true
 
 	<?php
 	
-	$set = $this->getService('com://site/validation.validator.set', 
+	$set = $this->getObject('com:validation.validator.set', 
 		array('constraints' => 
-			'email' => array('com://site/validation.constraint.email'),
-			'name' => array('com://site/validation.constraint.length' => array('min' => 0, 'max' => 150))
+			'email' => array('com:validation.constraint.email'),
+			'name' => array('com:validation.constraint.length' => array('min' => 0, 'max' => 150))
 		)
 	));
 	
