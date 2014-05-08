@@ -121,6 +121,7 @@ This will automatically create constraints for different column names and types,
 
 To attach the behavior to one of your tables, add the following to the table _initialize method:
 
+```php
 	<?php
 	
 	protected function _initialize(\Nooku\Library\Config $config)
@@ -136,6 +137,7 @@ If validation fails, an exception will be thrown.
 
 You can attach additional custom constraints for each column in the table by passing through a constraints property to the behavior. Each key of the constraints array corresponds to a column in the table. The value of this property should be an array of constraints being attached.
 
+```php
 	<?php
 
 	protected function _initialize(\Nooku\Library\Config $config)
@@ -161,6 +163,7 @@ If you are attaching the database behavior, it is advised to also attached the c
 
 To do so add the behavior in the _initialize method of the controller:
 
+```php
 	<?php
 	
 	protected function _initialize(\Nooku\Library\Config $config)
@@ -171,6 +174,7 @@ To do so add the behavior in the _initialize method of the controller:
 			)
 		))
 	}
+```
 	
 #### Custom uses
 
@@ -178,17 +182,21 @@ Constraints and validators can also be used in a stand alone mode for any time y
 
 E.g.:
 
+```php
 	<?php
 	
 	$this->getObject('com:validation.constraint.email')->validate('test@test.com');
+```
 	
 If the email address is valid, true will be returned, else an exception will be thrown.
 
 For simple validation that just required true/false without the error itself;
 
+```php
 	<?php
 	
 	$valid = $this->getObject('com:validation.constraint.email')->isValid('test@test.com');
+```
 	
 The exception will be caught and true/false returned. To access the specific error that was thrown, call `getError()` on the constraint;
 
@@ -196,6 +204,7 @@ The exception will be caught and true/false returned. To access the specific err
 
 Constraints can also be added to a constraint set; a group on constraints upon which a value can be validated against. All constraints in the set must validate for the set to be valid.
 
+```php
 	<?php
 	
 	$set = $this->getObject('com:validation.constraint.set', array(
@@ -207,6 +216,7 @@ Constraints can also be added to a constraint set; a group on constraints upon w
 	
 	$valid = $set->validate('test@test.com');
 	$errors = $set->getErrors();
+```
 	
 You can also add constraints to an existing set by calling `$set->addConstraint()`
 
@@ -218,6 +228,7 @@ Validator sets hold multiple constraint sets by key name. An array of data can t
 
 For the validator set to be valid, all constraint sets must validate/return true;
 
+```php
 	<?php
 	
 	$set = $this->getObject('com:validation.validator.set', 
@@ -229,6 +240,7 @@ For the validator set to be valid, all constraint sets must validate/return true
 	
 	$valid = $set->validate(array('email' => 'test@test.com', 'name' => 'Jon Doe'));
 	$errors = $set->getErrors();
+```
 	
 The above will validate an array/iterable object with the keys email and name, against the constraints passed in to the validator set.
 
