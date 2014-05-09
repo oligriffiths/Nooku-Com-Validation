@@ -24,14 +24,13 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 			return $this->validate($command);
 		}
 
-        if(in_array($command->getName(), array('after.validate')))
-        {
-            $this->raiseErrors($command);
-        }
-
 		if(in_array($command->getName(), array('after.add','after.edit','after.apply','after.save'))){
 			$this->setRedirect($command);
 		}
+
+        if(in_array($command->getName(), array('after.read'))){
+            $this->restoreSessionData($command);
+        }
 
 		return parent::execute($command, $chain);
 	}
@@ -56,7 +55,7 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 	 * @param Library\CommandContext $context
 	 * @return bool
 	 */
-	protected function _actionValidate(Library\ControllerContextInterface $context)
+	protected function validate(Library\ControllerContextInterface $context)
 	{
 		$model = $context->getSubject()->getModel();
 		$entity = $model->fetch();
@@ -66,7 +65,8 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 		{
 			if($entity->isValidatable())
 			{
-                $entity->setProperties($context->request->data->toArray());
+                $data = $context->request->data->toArray();
+                $entity->setProperties($data);
 
                 if($context->getSubject()->isDispatched()){
 
@@ -79,6 +79,9 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
                             $this->_redirect = $referrer;
                         }
 
+                        $this->raiseErrors($context);
+                        $this->storeSessionData($context);
+
                         return false;
                     }
 
@@ -87,6 +90,10 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
                 }
 			}
 		}
+
+        if($context->getSubject()->isDispatched()){
+            $this->clearSessionData($context);
+        }
 
 		return true;
 	}
@@ -139,128 +146,75 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 
 
     /**
-     * Mixin the behvior to the row, and load previous data from the session if set
-     *
-     * @param Library\DatabaseContext $context
+     * Stores entity data in the session so it can be restored on redirect
+     * @param Library\ControllerContextInterface $context
      */
-//	protected function _afterTableSelect(Library\DatabaseContext $context)
-//	{
-//		$data = $context->data;
-//		if($data instanceof KDatabaseRowAbstract || $data instanceof KDatabaseRowsetAbstract)
-//		{
-//			if($data->isValidatable())
-//			{
-//				$identifier = $this->getIdentifier()->toArray();
-//				$identifier['path'] = null;
-//				$identifier['name'] = null;
-//
-//				if($data instanceof KDatabaseRowAbstract) $data = array($data);
-//
-//				//Get the rows primary key columns ot build identifier
-//				$identifier = clone $context->data->getIdentifier();
-//				$identifier->path = array('database','row');
-//				$identifier->name = KInflector::singularize($identifier->name);
-//				$identifier = (string) $identifier;
-//
-//				//Check if there is session data for this identifier root
-//				if($hasSessionData = KRequest::has('session.data.'.$identifier,'raw')){
-//					foreach($data AS $row)
-//					{
-//						//Ensure behavior is mixed in
-//						if($row->isValidatable())
-//						{
-//							$this->loadFromSession($row);
-//						}
-//					}
-//				}
-//			}
-//		}
-//	}
+    protected function storeSessionData(Library\ControllerContextInterface $context)
+    {
+        $model = $context->getSubject()->getModel();
+        $entity = $model->fetch();
 
-//	/**
-//	 * Loads a rows data from the session
-//	 *
-//	 * @param null|KDatabaseRowInterface $row
-//	 * @return DatabaseBehaviorValidatable
-//	 */
-//	public function loadFromSession($row = null, $clear = true)
-//	{
-//		$row = $row ? $row : $this->getMixer();
-//
-//		//Get the rows primary key columns ot build identifier
-//		$identifier = (string) $row->getIdentifier();
-//
-//		//Compile primary keys
-//		foreach($row->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $identifier .= '.'.$row->get($column_id);
-//
-//		//Retrieve the data in the session to pre-populate the row
-//		if($prev_data = KRequest::get('session.data.'.$identifier, 'raw'))
-//		{
-//			$row_data = $row->getData();
-//			if(array_intersect_key($row_data, $prev_data) == $row_data)
-//			{
-//				$row->setData($prev_data);
-//
-//				//Clear session data
-//				if($clear) KRequest::set('session.data.'.$identifier, null);
-//			}
-//		}
-//
-//		return $this;
-//	}
-//
-//
-//	/**
-//	 * Stores a rows data in the session
-//	 * @param null|KDatabaseRowInterface $row
-//	 */
-//	public function storeToSession($row = null)
-//	{
-//		$row = $row ? $row : $this->getMixer();
-//
-//		//Construct object identifier
-//		$identifier = (string) $row->getIdentifier();
-//
-//		//Add the rows identifers
-//		foreach($row->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $identifier .= '.'.$row->get($column_id);
-//
-//		//Casting as a Library\ObjectConfig and to array will convert and sub Library\ObjectConfigs back to arrays
-//		$data = new Library\ObjectConfig($row->getData());
-//		$data = $data->toArray();
-//
-//		//Remove any objects
-//		array_walk_recursive($data, array($this, 'removeLibrary\Objects'));
-//
-//		KRequest::set('session.data.'.$identifier, $data);
-//	}
-//
-//
-//	/**
-//	 * Removes objects from an array
-//	 * @param $entity
-//	 * @param $key
-//	 */
-//	protected function removeObjects(&$entity, $key)
-//	{
-//		if($entity instanceof Library\Object) $entity = null;
-//	}
-//
-//
-//	/**
-//	 * Stores a rows data in the session
-//	 * @param null|KDatabaseRowInterface $row
-//	 */
-//	public function removeFromSession($row = null)
-//	{
-//		$row = $row ? $row : $this->getMixer();
-//
-//		//Construct object identifier
-//		$identifier = (string) $row->getIdentifier();
-//
-//		//Add the rows identifers
-//		foreach($row->getTable()->getUniqueColumns() AS $column_id => $column) if($column->primary) $identifier .= '.'.$row->get($column_id);
-//
-//		KRequest::set('session.data.'.$identifier, null);
-//	}
+        if ($entity->isValidatable()) {
 
+            //Get the data from the entity
+            $data = $entity->top()->toArray();
+
+            //Start the session (if not started already)
+            $session = $context->getUser()->getSession();
+
+            //Start the session if not already started
+            $session->start();
+
+            //Store the entity data
+            $session->set('validation.'.str_replace('.','-',$entity->getIdentifier()).'.'.$entity->id, $data);
+        }
+    }
+
+
+    /**
+     * Restores session data into the entity
+     * @param Library\ControllerContextInterface $context
+     */
+    protected function restoreSessionData(Library\ControllerContextInterface $context)
+    {
+        $model = $context->getSubject()->getModel();
+        $entity = $model->fetch();
+
+        if ($entity->isValidatable()) {
+
+            //Start the session (if not started already)
+            $session = $context->getUser()->getSession();
+
+            //Start the session if not already started
+            $session->start();
+
+            if($data = $session->get('validation.'.str_replace('.','-',$entity->getIdentifier()).'.'.$entity->id)){
+
+                $entity->setProperties($data, false);
+            }
+        }
+    }
+
+
+    /**
+     * Clears the session data for the entity on successful validation
+     * @param Library\ControllerContextInterface $context
+     */
+    protected function clearSessionData(Library\ControllerContextInterface $context)
+    {
+        $model = $context->getSubject()->getModel();
+        $entity = $model->fetch();
+
+        if ($entity->isValidatable()) {
+
+            //Start the session (if not started already)
+            $session = $context->getUser()->getSession();
+
+            //Start the session if not already started
+            $session->start();
+
+            //Store the entity data
+            $session->remove('validation.'.str_replace('.','-',$entity->getIdentifier()).'.'.$entity->id);
+        }
+    }
 }
