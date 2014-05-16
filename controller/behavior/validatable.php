@@ -55,7 +55,7 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 	 * @param Library\CommandContext $context
 	 * @return bool
 	 */
-	protected function validate(Library\ControllerContextInterface $context)
+	protected function validate(Library\CommandInterface $context)
 	{
 		$model = $context->getSubject()->getModel();
 		$entity = $model->fetch();
@@ -103,7 +103,7 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 	 * Sets the redirect in the mixer
 	 * This has to be called afterSave/Apply as those methods set the redirect also
 	 */
-	protected function setRedirect(Library\ControllerContextInterface $context)
+	protected function setRedirect(Library\CommandInterface $context)
 	{
 		if($this->_redirect){
             $context->getResponse()->setRedirect($this->_redirect, null);
@@ -115,7 +115,7 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 	 * Raises any errors that the row contains
 	 * @param Library\CommandContext $context
 	 */
-	protected function raiseErrors(Library\ControllerContextInterface $context)
+	protected function raiseErrors(Library\CommandInterface $context)
 	{
 		$model = $context->getSubject()->getModel();
 		$entity = $model->fetch();
@@ -147,9 +147,9 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 
     /**
      * Stores entity data in the session so it can be restored on redirect
-     * @param Library\ControllerContextInterface $context
+     * @param Library\CommandInterface $context
      */
-    protected function storeSessionData(Library\ControllerContextInterface $context)
+    protected function storeSessionData(Library\CommandInterface $context)
     {
         $model = $context->getSubject()->getModel();
         $entity = $model->fetch();
@@ -173,9 +173,9 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 
     /**
      * Restores session data into the entity
-     * @param Library\ControllerContextInterface $context
+     * @param Library\CommandInterface $context
      */
-    protected function restoreSessionData(Library\ControllerContextInterface $context)
+    protected function restoreSessionData(Library\CommandInterface $context)
     {
         $model = $context->getSubject()->getModel();
         $entity = $model->fetch();
@@ -198,9 +198,9 @@ class ControllerBehaviorValidatable extends Library\ControllerBehaviorAbstract
 
     /**
      * Clears the session data for the entity on successful validation
-     * @param Library\ControllerContextInterface $context
+     * @param Library\CommandInterface $context
      */
-    protected function clearSessionData(Library\ControllerContextInterface $context)
+    protected function clearSessionData(Library\CommandInterface $context)
     {
         $model = $context->getSubject()->getModel();
         $entity = $model->fetch();
