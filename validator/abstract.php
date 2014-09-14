@@ -1,6 +1,6 @@
 <?php
 
-namespace Nooku\Component\Validation;
+namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
 

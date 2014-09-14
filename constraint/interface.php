@@ -4,7 +4,7 @@
  * Date: 12/12/2012
  * Time: 17:28
  */
-namespace Nooku\Component\Validation;
+namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
 
