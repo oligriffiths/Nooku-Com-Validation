@@ -1,0 +1,13 @@
+{
+    "name": "oligriffiths/nooku-validation-component",
+    "description": "A validation component for the Nooku platform",
+    "type": "nooku-component",
+    "keywords": ["nooku", "validation", "component"],
+    "license": "GPL",
+    "require": {
+        "nooku/installer": "dev-develop"
+    },
+    "autoload": {
+        "files": ["autoload.php"]
+    }
+}
