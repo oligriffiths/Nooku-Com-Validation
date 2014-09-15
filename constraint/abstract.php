@@ -133,7 +133,8 @@ abstract class ConstraintAbstract extends Library\Object implements ConstraintIn
 	 */
 	public function getMessage($value = null, $key = 'message')
 	{
-		$message = \JText::_($this->_options->$key);
+        $translator = $this->getObject('translator');
+		$message = $translator($this->_options->$key);
 
 		//Get all the placeholders to replace
 		preg_match_all('#\{\{\s*([^\}]+)\s*\}\}#', $message, $matches);

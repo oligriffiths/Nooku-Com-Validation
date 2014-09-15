@@ -10,85 +10,97 @@ use Nooku\Library;
 
 class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 {
-	protected $_constraints;
+    protected $_constraints;
 
-	protected $_isValid = array();
+    protected $_isValid = array();
 
-	/**
-	 * @var array
-	 */
-	protected $_errors = array();
-
-
-	/**
-	 * Constructor.
-	 *
-	 * @param 	object 	An optional Library\ObjectConfig object with configuration options
-	 */
-	public function __construct(Library\ObjectConfig $config)
-	{
-		parent::__construct($config);
-
-		//Load DB constraints
-		if($config->load_constraints){
-			$this->loadConstraintsFromSchema(array_keys($config->constraints->toArray()));
-		}
-
-		//Load passed constraints
-		foreach($config->constraints->toArray() AS $column => $constraints)
-		{
-			foreach($constraints AS $key => $constraint){
-				$options = array();
-				if(is_array($key)){
-					$options = $constraint;
-					$constraint = $key;
-				}
-				$this->addConstraint($column, $constraint, $options);
-			}
-		}
-	}
+    /**
+     * @var array
+     */
+    protected $_errors = array();
 
 
-	/**
-	 * Initializes the options for the object
-	 *
-	 * Called from {@link __construct()} as a first step of object instantiation.
-	 *
-	 * @param 	object 	An optional Library\ObjectConfig object with configuration options
-	 * @return void
-	 */
-	protected function _initialize(Library\ObjectConfig $config)
-	{
-		$config->append(array(
-			'load_constraints' => true,
-			'constraints' => array(),
+    /**
+     * Constructor.
+     *
+     * @param 	object 	An optional Library\ObjectConfig object with configuration options
+     */
+    public function __construct(Library\ObjectConfig $config)
+    {
+        parent::__construct($config);
+
+        //Load DB constraints
+        if($config->load_constraints){
+            $this->loadConstraintsFromSchema(array_keys($config->constraints->toArray()));
+        }
+
+        //Load passed constraints
+        foreach($config->constraints->toArray() AS $column => $constraints)
+        {
+            foreach($constraints AS $key => $constraint){
+                $options = array();
+                if(is_array($key)){
+                    $options = $constraint;
+                    $constraint = $key;
+                }
+                $this->addConstraint($column, $constraint, $options);
+            }
+        }
+    }
+
+
+    /**
+     * Initializes the options for the object
+     *
+     * Called from {@link __construct()} as a first step of object instantiation.
+     *
+     * @param 	object 	An optional Library\ObjectConfig object with configuration options
+     * @return void
+     */
+    protected function _initialize(Library\ObjectConfig $config)
+    {
+        $config->append(array(
+            'load_constraints' => true,
+            'constraints' => array(),
             'priority'   => self::PRIORITY_LOWEST //Ensure this runs last so all other behaviors run that might affect the object data
-		));
+        ));
 
-		parent::_initialize($config);
-	}
-
-
-	/**
-	 * Before inserting data, validate it first
-	 *
-	 * @param Library\DatabaseContext $context
-	 * @return bool
-	 */
-	protected function _beforeTableInsert(Library\DatabaseContext $context)
-	{
-		return $this->_beforeTableUpdate($context);
-	}
+        parent::_initialize($config);
+    }
 
 
-	/**
-	 * Before updating data, validate it first
-	 *
-	 * @param Library\DatabaseContext $context
-	 * @return bool
-	 */
-	protected function _beforeTableUpdate(Library\DatabaseContext $context)
-	{
+    /**
+     * Only instances of ObjectArray are supported
+     *
+     * @return bool
+     */
+    public function isSupported()
+    {
+        $entity = $this->getMixer();
+        return $entity instanceof Library\DatabaseTableInterface || $entity instanceof Library\ObjectArray;
+    }
+
+
+    /**
+     * Before inserting data, validate it first
+     *
+     * @param Library\DatabaseContext $context
+     * @return bool
+     */
+    protected function _beforeInsert(Library\DatabaseContext $context)
+    {
+        return $this->_beforeUpdate($context);
+    }
+
+
+    /**
+     * Before updating data, validate it first
+     *
+     * @param Library\DatabaseContext $context
+     * @return bool
+     */
+    protected function _beforeUpdate(Library\DatabaseContext $context)
+    {
         if($context->data->isValidatable())
         {
             if(!$context->data->validate())
@@ -98,54 +110,49 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 
             return true;
         }
-	}
+    }
 
 
-	/***********
-	 * Mixins
-	 ***********/
+    /***********
+     * Mixins
+     ***********/
 
-	/**
-	 * @param $column
-	 * @param $constraint
-	 * @param array $options
-	 * @return DatabaseBehaviorValidatable
-	 */
-	public function addConstraint($column, $constraint, $options = array())
-	{
-		if(!isset($this->_constraints[$column])){
-			$this->_constraints[$column] = $this->getObject('com:validation.constraint.set');
-		}
+    /**
+     * @param $column
+     * @param $constraint
+     * @param array $options
+     * @return DatabaseBehaviorValidatable
+     */
+    public function addConstraint($column, $constraint, $options = array())
+    {
+        if(!isset($this->_constraints[$column])){
+            $this->_constraints[$column] = $this->getObject('com:validation.constraint.set');
+        }
 
         $options['message_target'] = ucfirst($column);
-		$this->_constraints[$column]->addConstraint($constraint, $options);
+        $this->_constraints[$column]->addConstraint($constraint, $options);
 
-		return $this;
-	}
-
-
-	/**
-	 * Returns the constraints
-	 * @return array
-	 */
-	public function getConstraints($column = null)
-	{
-		return $column ? (isset($this->_constraints[$column]) ? $this->_constraints[$column] : array()) : $this->_constraints;
-	}
+        return $this;
+    }
 
 
     /**
-	 * @return mixed
-	 */
-	public function validate()
-	{
+     * Returns the constraints
+     * @return array
+     */
+    public function getConstraints($column = null)
+    {
+        return $column ? (isset($this->_constraints[$column]) ? $this->_constraints[$column] : array()) : $this->_constraints;
+    }
+
+
+    /**
+     * @return mixed
+     */
+    public function validate()
+    {
         $entity = $this->getMixer();
 
-        //@TODO: Move to iSupported
-        if(!$entity instanceof Library\ObjectArray){
-            throw new \UnexpectedValueException(__FUNCTION__.' may only be called on a Library\ObjectArray');
-        }
-        
         $hash = spl_object_hash($entity);
 
         //Initialize the errors holder
@@ -182,12 +189,12 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
             }
         }
 
-		//Validate the data
-		$result = $set->validate($data);
-		$errors = $set->getErrors();
+        //Validate the data
+        $result = $set->validate($data);
+        $errors = $set->getErrors();
 
-		//Store the errors
-		$this->_errors[$hash] = $errors;
+        //Store the errors
+        $this->_errors[$hash] = $errors;
 
         //If success, return
         if($result) return true;
@@ -202,7 +209,7 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
         }
 
         throw new \RuntimeException($text);
-	}
+    }
 
 
     /**
@@ -242,108 +249,108 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     }
 
 
-	/**
-	 * Checks if the required constraint is set
-	 * @param $column
-	 * @return bool
-	 */
-	public function isRequired($column)
-	{
-		return $this->hasConstraint('required',$column);
-	}
+    /**
+     * Checks if the required constraint is set
+     * @param $column
+     * @return bool
+     */
+    public function isRequired($column)
+    {
+        return $this->hasConstraint('required',$column);
+    }
 
 
-	/**
-	 * Checks if a constraint is set
-	 * @param $constraint
-	 * @param $column
-	 * @return bool
-	 */
-	public function hasConstraint($constraint, $column)
-	{
-		$constraints = $this->getConstraints($column);
-		if($constraint == 'required'){
-			return isset($constraints['required']) || isset($constraints['notblank']) || isset($constraints['notnull']);
-		}
-		return isset($constraints[$constraint]);
-	}
+    /**
+     * Checks if a constraint is set
+     * @param $constraint
+     * @param $column
+     * @return bool
+     */
+    public function hasConstraint($constraint, $column)
+    {
+        $constraints = $this->getConstraints($column);
+        if($constraint == 'required'){
+            return isset($constraints['required']) || isset($constraints['notblank']) || isset($constraints['notnull']);
+        }
+        return isset($constraints[$constraint]);
+    }
 
 
-	/**
-	 * Load constraints from the database schema.
-	 *
-	 * Certain column name define specific constraints, eg, email, ip/ip_address
-	 * The column type is used to define the validation type and length sets a max constraint
-	 *
-	 * @return mixed
-	 */
-	protected function loadConstraintsFromSchema($exclude = array())
-	{
-		$mixer = $this->getMixer();
-		$columns = $mixer->getColumns();
-		foreach($columns AS $id => $column)
-		{
-			if($column->primary || in_array($id, $exclude)) continue;
+    /**
+     * Load constraints from the database schema.
+     *
+     * Certain column name define specific constraints, eg, email, ip/ip_address
+     * The column type is used to define the validation type and length sets a max constraint
+     *
+     * @return mixed
+     */
+    protected function loadConstraintsFromSchema($exclude = array())
+    {
+        $mixer = $this->getMixer();
+        $columns = $mixer->getColumns();
+        foreach($columns AS $id => $column)
+        {
+            if($column->primary || in_array($id, $exclude)) continue;
 
-			$constraint_set = array();
+            $constraint_set = array();
 
             $required_type = 'required';
-			if($column->name == 'email' || $column->name == 'email_address') $constraint_set['email'] = array();
-			if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set['ip'] = array();
+            if($column->name == 'email' || $column->name == 'email_address') $constraint_set['email'] = array();
+            if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set['ip'] = array();
 
-			switch($column->type)
-			{
-				case 'date':        $constraint_set['date'] = array('allow_zeros' => !$column->required); break;
-				case 'datetime':    $constraint_set['timestamp'] = array('allow_zeros' => !$column->required); break;
-				case 'time':        $constraint_set['time'] = array('allow_zeros' => !$column->required); break;
+            switch($column->type)
+            {
+                case 'date':        $constraint_set['date'] = array('allow_zeros' => !$column->required); break;
+                case 'datetime':    $constraint_set['timestamp'] = array('allow_zeros' => !$column->required); break;
+                case 'time':        $constraint_set['time'] = array('allow_zeros' => !$column->required); break;
 
-				case 'int':
-				case 'integer':
+                case 'int':
+                case 'integer':
                 case 'tinyint':
                 case 'smallint':
                 case 'mediumint':
                 case 'bigint':
-					if($column->type == 'tinyint' && $column->length == 1) $constraint_set['boolean'] = array();
-					else $constraint_set['int'] = array();
-					break;
+                    if($column->type == 'tinyint' && $column->length == 1) $constraint_set['boolean'] = array();
+                    else $constraint_set['int'] = array();
+                    break;
 
-				case 'float':
-				case 'double':
+                case 'float':
+                case 'double':
                 case 'real':
                 case 'double':
                 case 'double precision':
-					$constraint_set['float'] = array();
-					break;
+                    $constraint_set['float'] = array();
+                    break;
 
-				case 'bit':
-				case 'bool':
+                case 'bit':
+                case 'bool':
                 case 'boolean':
                     $required_type = 'notnull'; //booleans can be 0, notblank fails on this
-					$constraint_set['boolean'] = array();
-					break;
+                    $constraint_set['boolean'] = array();
+                    break;
 
-				case 'varchar':
-				case 'text':
-				case 'tinytext':
-				case 'mediumtext':
-				case 'longtext':
-				case 'blob':
-				case 'tinyblob':
-				case 'smallblob':
-				case 'longblob':
+                case 'varchar':
+                case 'text':
+                case 'tinytext':
+                case 'mediumtext':
+                case 'longtext':
+                case 'blob':
+                case 'tinyblob':
+                case 'smallblob':
+                case 'longblob':
                     $constraint_set['string'] = array();
-					break;
-			}
+                    break;
+            }
 
             if($column->required) $constraint_set[$required_type] = array();
 
-			if($column->length) $constraint_set['length'] = array('max' => $column->length);
+            if($column->length) $constraint_set['length'] = array('max' => $column->length);
 
-			foreach($constraint_set AS $constraint => $options){
-				$this->addConstraint($id, $constraint, $options);
-			}
-		}
+            foreach($constraint_set AS $constraint => $options){
+                $this->addConstraint($id, $constraint, $options);
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 }
