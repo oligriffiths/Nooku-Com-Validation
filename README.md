@@ -19,12 +19,16 @@ Database schemas are also converted into constraints and applied automatically.
 The controller behavior is responsible for handling validation before add/edit/save/apply.
 Errors are caught and raised as notices as opposed to exceptions thrown by the database behavior.
 
+To implement this, add 'com://oligriffiths/validation.controller.behavior.validatable' to the controller that will save the entity
+
 
 ## Database behavior:
 
 The database behavior is responsible for reading the database schema and converting this into associated constraints.
 It also handles running validation before insert/update, storing the current data should validation fail,
 and re-populating the object after select, so no need to handle storing the data yourself.
+
+To implement this, add 'com://oligriffiths/validation.database.behavior.validatable' to the database table for the entity
 
 
 ## Constraints:
