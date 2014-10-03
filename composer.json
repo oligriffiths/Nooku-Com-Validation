@@ -1,5 +1,5 @@
 {
-    "name": "oligriffiths/nooku-validation-component",
+    "name": "oligriffiths/validation-component",
     "description": "A validation component for the Nooku platform",
     "type": "nooku-component",
     "keywords": ["nooku", "validation", "component"],
