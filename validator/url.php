@@ -5,22 +5,23 @@ namespace Oligriffiths\Component\Validation;
 use Nooku\Library;
 
 /**
- * Base class for constraint validators
+ * Class ValidatorUrl
  *
- * @author Bernhard Schussek <bschussek@gmail.com>
+ * URL validator
  *
- * @api
+ * @package Oligriffiths\Component\Validation
  */
-class ValidatorUrl extends ValidatorDefault
+class ValidatorUrl extends ValidatorAbstract
 {
 	/**
 	 * Validate the value is a url
 	 *
 	 * @see ValidatorInterface::validate
 	 */
-	protected function _validate($value, ConstraintDefault $constraint)
+	protected function _validate($value)
 	{
-		if($value instanceof \RuntimeException) $value = (string) $value;
-		return parent::_validate($value, $constraint);
+		if($value instanceof Library\HttpUrlInterface) $value = (string) $value;
+
+		return parent::_validate($value);
 	}
 }

@@ -10,13 +10,13 @@ namespace Oligriffiths\Component\Validation;
 use Nooku\Library;
 
 /**
- * Class ValidatorChoice
+ * Class ValidatorMax
  *
- * Choice validator. Validates that the value is in an array of choices
+ * Max validator. Ensures value is less than max
  *
  * @package Oligriffiths\Component\Validation
  */
-class ValidatorChoice extends ValidatorAbstract
+class ValidatorMax extends ValidatorAbstract
 {
     /**
      * Initializes the options for the object
@@ -29,36 +29,18 @@ class ValidatorChoice extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-            'message' => '{{target}} is not a valid {{type}}, must be one of {{choices}}, "{{value}}" given',
-			'filter' => false,
-            'choices' => array()
+			'max' => null,
+			'message' => '{{target}} should be {{max}} or less, "{{value}}" given'
 		));
-
 		parent::_initialize($config);
 	}
 
-
     /**
-     * Returns the options that are required for this constraint to be valid
+     * Returns the options that are required for this validator to be valid
      * @return array
      */
     public function getRequiredOptions()
     {
-        return array('message','choices');
+        return array('message','max');
     }
-
-
-	/**
-	 * Validate a value against the constraint
-	 *
-	 * @see ValidatorInterface::validate
-	 */
-	protected function _validate($value)
-	{
-		if (!in_array($value, $this->getConfig()->choices->toArray())) {
-			throw new \RuntimeException($this->getMessage($value));
-		}
-
-		return true;
-	}
 }

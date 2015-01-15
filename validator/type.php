@@ -5,18 +5,28 @@ namespace Oligriffiths\Component\Validation;
 use Nooku\Library;
 
 /**
- * Base class for constraint validators
+ * Class ValidatorType
  *
- * @author Bernhard Schussek <bschussek@gmail.com>
+ * Type validator. Validates the value is_{type}
  *
- * @api
+ * @package Oligriffiths\Component\Validation
  */
-class ValidatorType extends ValidatorDefault
+class ValidatorType extends ValidatorAbstract
 {
+    /**
+     * Initializes the options for the object
+     *
+     * Called from {@link __construct()} as a first step of object instantiation.
+     *
+     * @param   Library\ObjectConfig $object An optional ObjectConfig object with configuration options
+     * @return  void
+     */
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'filter' => false
+			'filter' => false,
+            'type' => null,
+            'strict' => false,
 		));
 		parent::_initialize($config);
 	}
@@ -27,57 +37,51 @@ class ValidatorType extends ValidatorDefault
 	 *
 	 * @see ValidatorInterface::validate
 	 */
-	protected function _validate($value, ConstraintDefault $constraint)
+	protected function _validate($value)
 	{
-		if($constraint->convert_string && is_string($value))
+        $config = $this->getOptions();
+        
+		if(!$config->strict && is_string($value))
 		{
-			switch($constraint->type)
+			switch($config->type)
 			{
 				case 'long':
 				case 'integer':
 				case 'int':
-					if(filter_var($value, FILTER_VALIDATE_INT) == $value) $value = filter_var($value, FILTER_VALIDATE_INT);
+					if(null !== filter_var($value, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE)) return true;
 					break;
 
 				case 'real':
 				case 'double':
 				case 'float':
-					if(filter_var($value, FILTER_VALIDATE_FLOAT) == $value) $value = filter_var($value, FILTER_VALIDATE_FLOAT);
+					if(null !== filter_var($value, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE)) return true;
 					break;
 
 				case 'boolean':
 				case 'bool':
-					if(strtolower($value) == 'true' || $value === '1' || $value === 1) $value = true;
-					if(strtolower($value) == 'false' || $value === '0' || $value ===0) $value = false;
+                    if(null !== filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)) return true;
 					break;
 			}
 		}
 
-		if ($constraint->convert_bool) {
-			if ($value === 0) {
-				$value = false;
-			} else if ($value === 1) {
-				$value = true;
-			}
-		}
-
-		$type = strtolower($constraint->type);
+        //Create function names
+		$type = strtolower($config->type);
 		$type = $type == 'boolean' ? 'bool' : $type;
 		$isFunction = 'is_'.$type;
 		$ctypeFunction = 'ctype_'.$type;
 
-
+        //Validate functions
 		$result = false;
-		if (function_exists($isFunction) && call_user_func($isFunction, $value)) {
+        if (is_object($value) && $value instanceof $config->type) {
+            $result = true;
+        }else if (function_exists($isFunction) && call_user_func($isFunction, $value) === true) {
 			$result = true;
-		} elseif (function_exists($ctypeFunction) && call_user_func($ctypeFunction, $value)) {
-			$result = true;
-		} elseif ($value instanceof $constraint->type) {
+		} elseif (function_exists($ctypeFunction) && call_user_func($ctypeFunction, $value) === true) {
 			$result = true;
 		}
 
 		if(!$result){
-			$message = $constraint->getMessage(gettype($value));
+			$message = $this->getMessage(gettype($value));
 			throw new \RuntimeException($message);
 		}
 

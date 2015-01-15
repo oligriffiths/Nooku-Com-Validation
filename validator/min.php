@@ -10,13 +10,13 @@ namespace Oligriffiths\Component\Validation;
 use Nooku\Library;
 
 /**
- * Class ValidatorChoice
+ * Class ValidatorMin
  *
- * Choice validator. Validates that the value is in an array of choices
+ * Minimum value validator
  *
  * @package Oligriffiths\Component\Validation
  */
-class ValidatorChoice extends ValidatorAbstract
+class ValidatorMin extends ValidatorAbstract
 {
     /**
      * Initializes the options for the object
@@ -29,9 +29,8 @@ class ValidatorChoice extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-            'message' => '{{target}} is not a valid {{type}}, must be one of {{choices}}, "{{value}}" given',
-			'filter' => false,
-            'choices' => array()
+			'min' => null,
+			'message' => '{{target}} should be {{min}} or more, "{{value}}" given'
 		));
 
 		parent::_initialize($config);
@@ -39,26 +38,11 @@ class ValidatorChoice extends ValidatorAbstract
 
 
     /**
-     * Returns the options that are required for this constraint to be valid
+     * Returns the options that are required for this validator to be valid
      * @return array
      */
     public function getRequiredOptions()
     {
-        return array('message','choices');
+        return array('message','min');
     }
-
-
-	/**
-	 * Validate a value against the constraint
-	 *
-	 * @see ValidatorInterface::validate
-	 */
-	protected function _validate($value)
-	{
-		if (!in_array($value, $this->getConfig()->choices->toArray())) {
-			throw new \RuntimeException($this->getMessage($value));
-		}
-
-		return true;
-	}
 }

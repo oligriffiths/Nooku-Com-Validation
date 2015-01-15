@@ -12,29 +12,29 @@ use Nooku\Library;
 interface ValidatorInterface
 {
     /**
-     * Checks if the passed value is valid.
+     * Validates the supplied value and throws exception on failure
      *
      * @param mixed      $value      The value that should be validated
-     * @param Constraint $constraint The constraint for the validation
      *
-     * @api
+     * @throws \RuntimeException
      */
-    public function validate($value, $constraint = null);
+    public function validate($value);
 
 	/**
 	 *
-	 * @abstract
-	 * @param $value
-	 * @param null | ConstraintDefault $constraint
-	 * @return mixed
+     * Validates the supplied value
+     *
+	 * @param mixed      $value      The value that should be validated
+	 * @return BOOL
 	 */
-	public function isValid($value, $constraint = null);
+	public function isValid($value);
 
-
-	/**
-	 * Sets the constraint in the validator
-	 * @param ConstraintInterface $constraint
-	 * @return mixed
-	 */
-	public function setConstraint(ConstraintInterface $constraint);
+    /**
+     * Gets the message and replaces placeholders with their values
+     *
+     * @param null $value - value used to {{ value }} placeholder
+     * @param string $key - message key, for use with multiple messages
+     * @return mixed|null
+     */
+    public function getMessage($value = null, $key = 'message');
 }

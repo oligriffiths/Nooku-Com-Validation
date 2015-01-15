@@ -10,7 +10,7 @@ use Nooku\Library;
 
 class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 {
-    protected $_constraints;
+    protected $_validators = array();
 
     protected $_isValid = array();
 
@@ -29,21 +29,21 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     {
         parent::__construct($config);
 
-        //Load DB constraints
-        if($config->load_constraints){
-            $this->loadConstraintsFromSchema(array_keys($config->constraints->toArray()));
+        //Load DB validator
+        if($config->load_db_schema){
+            $this->loadFromSchema(array_keys($config->validators->toArray()));
         }
 
-        //Load passed constraints
-        foreach($config->constraints->toArray() AS $column => $constraints)
+        //Load passed validators
+        foreach($config->validators->toArray() AS $column => $validators)
         {
-            foreach($constraints AS $key => $constraint){
+            foreach($validators AS $key => $validator){
                 $options = array();
                 if(is_array($key)){
-                    $options = $constraint;
-                    $constraint = $key;
+                    $options = $validator;
+                    $validator = $key;
                 }
-                $this->addConstraint($column, $constraint, $options);
+                $this->addValidator($column, $validator, $options);
             }
         }
     }
@@ -60,8 +60,9 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     protected function _initialize(Library\ObjectConfig $config)
     {
         $config->append(array(
-            'load_constraints' => true,
-            'constraints' => array(),
+            'load_db_schema' => true,
+            'table_filter' => true,
+            'validators' => array(),
             'priority'   => self::PRIORITY_LOWEST //Ensure this runs last so all other behaviors run that might affect the object data
         ));
 
@@ -118,31 +119,34 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
      ***********/
 
     /**
-     * @param $column
-     * @param $constraint
+     * @param $column - the column name
+     * @param $$validator - the validator name or identifier
      * @param array $options
      * @return DatabaseBehaviorValidatable
      */
-    public function addConstraint($column, $constraint, $options = array())
+    public function addValidator($column, $validator, $options = array())
     {
-        if(!isset($this->_constraints[$column])){
-            $this->_constraints[$column] = $this->getObject('com:validation.constraint.set');
+        if(!isset($this->_validators[$column])){
+            $this->_validators[$column] = $this->getObject('com:validation.validator.set');
         }
 
-        $options['message_target'] = ucfirst($column);
-        $this->_constraints[$column]->addConstraint($constraint, $options);
+        if(!isset($options['message_target'])) $options['message_target'] = ucfirst($column);
+
+        $this->_validators[$column]->addValidator($validator, $options);
 
         return $this;
     }
 
 
     /**
-     * Returns the constraints
+     * Returns the validators
+     *
+     * @param null $column - specific column
      * @return array
      */
-    public function getConstraints($column = null)
+    public function getValidators($column = null)
     {
-        return $column ? (isset($this->_constraints[$column]) ? $this->_constraints[$column] : array()) : $this->_constraints;
+        return $column ? (isset($this->_validators[$column]) ? $this->_validators[$column] : array()) : $this->_validators;
     }
 
 
@@ -158,19 +162,14 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
         //Initialize the errors holder
         $this->_errors[$hash] = array();
 
-        //Get the validation set and pass in constraints
-        $identifier = $this->getIdentifier()->toArray();
-        $identifier['path'] = array('validator');
-        $identifier['name'] = 'set';
-        if(!Library\ObjectManager::getInstance()->getClass($identifier)) $identifier['package'] = 'validation';
-
-        //Get the constraint set
-        $set = $this->getObject($identifier, array('constraints' => $this->getConstraints()));
+        //Get the validator set
+        $set = $this->getObject('com://oligriffiths/validation.validator.set', array('validators' => $this->getValidators()));
 
         //Filter the data
         $data = $entity->toArray();
 
-        if($entity instanceof Library\DatabaseRowInterface){
+        //Filter the entity data
+        if($this->getConfig()->table_filter && $entity instanceof Library\DatabaseRowInterface){
 
             $table = $entity->getTable();
 
@@ -250,59 +249,59 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 
 
     /**
-     * Checks if the required constraint is set
+     * Checks if the required validator is set
      * @param $column
      * @return bool
      */
     public function isRequired($column)
     {
-        return $this->hasConstraint('required',$column);
+        return $this->hasValidator('required',$column);
     }
 
 
     /**
-     * Checks if a constraint is set
-     * @param $constraint
+     * Checks if a validator is set
+     * @param $validator
      * @param $column
      * @return bool
      */
-    public function hasConstraint($constraint, $column)
+    public function hasValidator($validator, $column)
     {
-        $constraints = $this->getConstraints($column);
-        if($constraint == 'required'){
-            return isset($constraints['required']) || isset($constraints['notblank']) || isset($constraints['notnull']);
+        $validators = $this->getValidator($column);
+        if($validator == 'required'){
+            return isset($validators['required']) || isset($validators['notblank']) || isset($validators['notnull']);
         }
-        return isset($constraints[$constraint]);
+        return isset($validators[$validator]);
     }
 
 
     /**
-     * Load constraints from the database schema.
+     * Load validators from the database schema.
      *
-     * Certain column name define specific constraints, eg, email, ip/ip_address
+     * Certain column name define specific validators, eg, email, ip/ip_address
      * The column type is used to define the validation type and length sets a max constraint
      *
      * @return mixed
      */
-    protected function loadConstraintsFromSchema($exclude = array())
+    protected function loadFromSchema($exclude = array())
     {
         $mixer = $this->getMixer();
         $columns = $mixer->getColumns();
-        foreach($columns AS $id => $column)
+        foreach($columns AS $name => $column)
         {
-            if($column->primary || in_array($id, $exclude)) continue;
+            if($column->primary || in_array($name, $exclude)) continue;
 
-            $constraint_set = array();
+            $validator_set = array();
 
             $required_type = 'required';
-            if($column->name == 'email' || $column->name == 'email_address') $constraint_set['email'] = array();
-            if($column->name == 'ip' || $column->name == 'ip_address') $constraint_set['ip'] = array();
+            if($column->name == 'email' || $column->name == 'email_address') $validator_set['email'] = array();
+            if($column->name == 'ip' || $column->name == 'ip_address') $validator_set['ip'] = array();
 
             switch($column->type)
             {
-                case 'date':        $constraint_set['date'] = array('allow_zeros' => !$column->required); break;
-                case 'datetime':    $constraint_set['timestamp'] = array('allow_zeros' => !$column->required); break;
-                case 'time':        $constraint_set['time'] = array('allow_zeros' => !$column->required); break;
+                case 'date':        $validator_set['date'] = array('allow_zeros' => !$column->required); break;
+                case 'datetime':    $validator_set['timestamp'] = array('allow_zeros' => !$column->required); break;
+                case 'time':        $validator_set['time'] = array('allow_zeros' => !$column->required); break;
 
                 case 'int':
                 case 'integer':
@@ -310,8 +309,8 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
                 case 'smallint':
                 case 'mediumint':
                 case 'bigint':
-                    if($column->type == 'tinyint' && $column->length == 1) $constraint_set['boolean'] = array();
-                    else $constraint_set['int'] = array();
+                    if($column->type == 'tinyint' && $column->length == 1) $validator_set['boolean'] = array();
+                    else $validator_set['int'] = array();
                     break;
 
                 case 'float':
@@ -319,14 +318,14 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
                 case 'real':
                 case 'double':
                 case 'double precision':
-                    $constraint_set['float'] = array();
+                    $validator_set['float'] = array();
                     break;
 
                 case 'bit':
                 case 'bool':
                 case 'boolean':
                     $required_type = 'notnull'; //booleans can be 0, notblank fails on this
-                    $constraint_set['boolean'] = array();
+                    $validator_set['boolean'] = array();
                     break;
 
                 case 'varchar':
@@ -338,16 +337,16 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
                 case 'tinyblob':
                 case 'smallblob':
                 case 'longblob':
-                    $constraint_set['string'] = array();
+                    $validator_set['string'] = array();
                     break;
             }
 
-            if($column->required) $constraint_set[$required_type] = array();
+            if($column->required) $validator_set[$required_type] = array();
 
-            if($column->length) $constraint_set['length'] = array('max' => $column->length);
+            if($column->length) $validator_set['length'] = array('max' => $column->length);
 
-            foreach($constraint_set AS $constraint => $options){
-                $this->addConstraint($id, $constraint, $options);
+            foreach($validator_set AS $validator => $options){
+                $this->addValidator($name, $validator, $options);
             }
         }
 

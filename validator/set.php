@@ -23,31 +23,72 @@ class ValidatorSet extends Library\ObjectArray
 	{
 		parent::__construct($config);
 
-        $constraints = Library\ObjectConfig::unbox($config->constraints);
-		if(is_array($constraints)) $this->addConstraints($constraints);
+		$this->addValidators($config->validators->toArray());
 	}
+
+
+    /**
+     * Initializes the options for the object
+     *
+     * Called from {@link __construct()} as a first step of object instantiation.
+     *
+     * @param   Library\ObjectConfig $object An optional ObjectConfig object with configuration options
+     * @return  void
+     */
+    protected function _initialize(Library\ObjectConfig $config)
+    {
+        $config->append(array(
+            'validators' => array()
+        ));
+
+        parent::_initialize($config);
+    }
 
 
 	/***
 	 * Adds constraint sets by key to the set
 	 * @param array $constraints
 	 */
-	public function addConstraints(array $constraints)
+	public function addValidators(array $validators)
 	{
-		foreach($constraints AS $column => $constraintset)
+		foreach($validators AS $key => $validator)
 		{
-			if(is_array($constraintset)){
-				$constraintset = $this->getObject('com:validation.constraint.set', array('constraints' => $constraints));
+			if(is_array($validator)){
+                $validator = $this->getObject('com:validation.validator.set', array('validators' => $validator));
 			}
 
-			if($constraintset instanceof ConstraintSet)
-			{
-				$this->offsetSet($column, $constraintset);
-			}
+			$this->addValidator($key, $validator);
 		}
 
         return $this;
 	}
+
+
+    /**
+     * Adds a validator to the stack
+     *
+     * @param $key
+     * @param $validator
+     */
+    public function addValidator($key, $validator)
+    {
+        if(is_string($validator)){
+            $identifier = $validator;
+
+            if(strpos($validator, '.') === false){
+                $identifier = $this->getIdentifier()->toArray();
+                $identifier['name'] = $validator;
+            }
+
+            $validator = $this->getObject($identifier);
+        }
+
+        if(!$validator instanceof ValidatorInterface && !$validator instanceof ValidatorSet){
+            throw new \InvalidArgumentException('Validator must  be an instance of ValidatorInterface or ValidatorSet');
+        }
+
+        $this->offsetSet($key, $validator);
+    }
 
 
 	/**
@@ -59,15 +100,47 @@ class ValidatorSet extends Library\ObjectArray
 	public function validate($data)
 	{
         $this->_errors = array();
-		foreach($data AS $key => $value)
-		{
-			if($constraints = $this->offsetGet($key))
-			{
-                if(true !== ($errors = $constraints->validate($value))){
-                    $this->_errors[$key] = $errors;
+
+        if(is_array($data)){
+            foreach($data AS $key => $value) {
+
+                if($validator = $this->offsetGet($key)) {
+
+                    $errors = null;
+                    if($validator instanceof ValidatorSet){
+
+                        if(!$validator->validate($value)) $errors = $validator->getErrors();
+
+                    }else if($validator instanceof ValidatorInterface){
+                        try{
+                            $validator->validate($value);
+                        }catch(\Exception $e){
+                            $errors = $e->getMessage();
+                        }
+                    }
+
+                    if($errors) $this->_errors[$key] = $errors;
                 }
-			}
-		}
+            }
+        }else{
+            foreach($this AS $key => $validator){
+
+                $errors = null;
+                if($validator instanceof ValidatorSet){
+
+                    if(!$validator->validate($data)) $errors = $validator->getErrors();
+
+                }else if($validator instanceof ValidatorInterface){
+                    try{
+                        $validator->validate($data);
+                    }catch(\Exception $e){
+                        $errors = $e->getMessage();
+                    }
+                }
+
+                if($errors) $this->_errors[$key] = $errors;
+            }
+        }
 
 		return count($this->_errors) ? false : true;
 	}
