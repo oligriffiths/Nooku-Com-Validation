@@ -150,7 +150,7 @@ abstract class ValidatorAbstract extends Library\Object implements ValidatorInte
 					break;
 
 				case 'array':
-					if(!(is_array($value) || $value instanceof \Iterator || $value instanceof \ArrayAccess)) $result = false;
+					if(!(is_array($value) || $value instanceof \Iterator)) $result = false;
 					break;
 
 				default:
