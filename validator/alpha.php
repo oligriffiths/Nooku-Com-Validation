@@ -31,7 +31,7 @@ class ValidatorAlpha extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} must be alphabetic, "{{value}}" given',
+			'message' => '{{message_target}} must be alphabetic, "{{value}}" given',
 		));
 		parent::_initialize($config);
 	}

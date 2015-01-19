@@ -23,7 +23,7 @@ class ValidatorRegex extends ValidatorAbstract
 	{
 		$config->append(array(
 			'regex' => null,
-			'message' => '{{target}} does not validate against the regular expression "{{regex}}", "{{value}}" given',
+			'message' => '{{message_target}} does not validate against the regular expression "{{regex}}", "{{value}}" given',
 			'value_type' => 'string'
 		));
 

@@ -29,7 +29,7 @@ class ValidatorNotblank extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} must not be blank',
+			'message' => '{{message_target}} must not be blank',
 		));
 
 		parent::_initialize($config);

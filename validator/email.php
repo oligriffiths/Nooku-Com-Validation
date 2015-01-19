@@ -30,7 +30,7 @@ class ValidatorEmail extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} is not a valid email address, "{{value}}" given'
+			'message' => '{{message_target}} is not a valid email address, "{{value}}" given'
 		));
 
 		parent::_initialize($config);

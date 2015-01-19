@@ -31,7 +31,7 @@ abstract class ValidatorAbstract extends Library\Object implements ValidatorInte
      *
      * @var mixed
      */
-	protected $_filter;
+    protected $_filter;
 
 
     /**
@@ -72,8 +72,8 @@ abstract class ValidatorAbstract extends Library\Object implements ValidatorInte
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-            'message' => '{{target}} is not a valid {{type}}, "{{value}}" given',
-            'message_bad_type' => '{{target}} must be of type "{{value_type}}", "{{value}}" given',
+            'message' => '{{message_target}} is not a valid {{type}}, "{{value}}" given',
+            'message_bad_type' => '{{message_target}} must be of type "{{value_type}}", "{{value}}" given',
             'message_target' => 'This value',
             'allow_null' => false,
             'value_type' => 'scalar',

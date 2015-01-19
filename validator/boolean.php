@@ -29,7 +29,7 @@ class ValidatorBoolean extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} must be a boolean, "{{value}}" given',
+			'message' => '{{message_target}} must be a boolean, "{{value}}" given',
             'strict' => false,
         ));
 

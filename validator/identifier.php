@@ -29,7 +29,7 @@ class ValidatorIdentifier extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-            'message' => '{{target}} must be valid identifier, "{{value}}" given',
+            'message' => '{{message_target}} must be valid identifier, "{{value}}" given',
             'value_type' => null,
 			'filter' => false
 		));

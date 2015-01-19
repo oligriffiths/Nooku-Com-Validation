@@ -29,7 +29,7 @@ class ValidatorIp extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} is not a valid IP address, "{{value}}" given'
+			'message' => '{{message_target}} is not a valid IP address, "{{value}}" given'
 		));
 
 		parent::_initialize($config);

@@ -29,7 +29,7 @@ class ValidatorMd5 extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} must be a valid MD5 hash, "{{value}}" given',
+			'message' => '{{message_target}} must be a valid MD5 hash, "{{value}}" given',
             'value_type' => 'string'
 		));
 

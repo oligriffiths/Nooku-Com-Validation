@@ -30,7 +30,7 @@ class ValidatorNotnull extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} must not be null',
+			'message' => '{{message_target}} must not be null',
 			'allow_null' => true,
 			'value_type' => null
 		));

@@ -29,7 +29,7 @@ class ValidatorTrue extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} must be true, "{{value}}" given'
+			'message' => '{{message_target}} must be true, "{{value}}" given'
 		));
 
 		parent::_initialize($config);

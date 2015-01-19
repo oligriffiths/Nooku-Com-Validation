@@ -29,7 +29,7 @@ class ValidatorBase64 extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} must be base64 encoded, "{{value}}" given',
+			'message' => '{{message_target}} must be base64 encoded, "{{value}}" given',
 		));
 
 		parent::_initialize($config);

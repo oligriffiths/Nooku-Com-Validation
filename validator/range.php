@@ -29,8 +29,8 @@ class ValidatorRange extends ValidatorDefault
 			'filter' => false,
             'min' => null,
             'max' => null,
-            'message_min' => '{{target}} should be {{min}} or more, {{value}} given',
-            'message_max' => '{{target}} should be {{max}} or less, {{value}} given',
+            'message_min' => '{{message_target}} should be {{min}} or more, {{value}} given',
+            'message_max' => '{{message_target}} should be {{max}} or less, {{value}} given',
             'value_type' => 'numeric'
 		));
 

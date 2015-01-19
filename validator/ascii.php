@@ -29,7 +29,7 @@ class ValidatorAscii extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} must be an ascii characters only, "{{value}}" given',
+			'message' => '{{message_target}} must be an ascii characters only, "{{value}}" given',
 		));
 
 		parent::_initialize($config);

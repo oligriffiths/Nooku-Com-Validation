@@ -30,7 +30,7 @@ class ValidatorMin extends ValidatorAbstract
 	{
 		$config->append(array(
 			'min' => null,
-			'message' => '{{target}} should be {{min}} or more, "{{value}}" given'
+			'message' => '{{message_target}} should be {{min}} or more, "{{value}}" given'
 		));
 
 		parent::_initialize($config);

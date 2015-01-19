@@ -29,7 +29,7 @@ class ValidatorInternalurl extends ValidatorAbstract
     protected function _initialize(Library\ObjectConfig $config)
     {
         $config->append(array(
-            'message' => '{{target}} must be valid internal url, "{{value}}" given',
+            'message' => '{{message_target}} must be valid internal url, "{{value}}" given',
             'value_type' => false
         ));
 

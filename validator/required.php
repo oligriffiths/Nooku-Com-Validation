@@ -29,7 +29,7 @@ class ValidatorRequired extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} is required',
+			'message' => '{{message_target}} is required',
             'filter' => 'notblank'
 		));
 

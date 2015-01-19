@@ -29,7 +29,7 @@ class ValidatorChoice extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-            'message' => '{{target}} is not a valid {{type}}, must be one of {{choices}}, "{{value}}" given',
+            'message' => '{{message_target}} is not a valid {{type}}, must be one of {{choices}}, "{{value}}" given',
 			'filter' => false,
             'choices' => array()
 		));

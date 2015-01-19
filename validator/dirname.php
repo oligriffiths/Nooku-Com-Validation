@@ -30,7 +30,7 @@ class ValidatorDirname extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{target}} must be valid directory name, "{{value}}" given',
+			'message' => '{{message_target}} must be valid directory name, "{{value}}" given',
 		));
 
 		parent::_initialize($config);

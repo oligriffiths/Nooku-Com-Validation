@@ -30,7 +30,7 @@ class ValidatorMax extends ValidatorAbstract
 	{
 		$config->append(array(
 			'max' => null,
-			'message' => '{{target}} should be {{max}} or less, "{{value}}" given'
+			'message' => '{{message_target}} should be {{max}} or less, "{{value}}" given'
 		));
 		parent::_initialize($config);
 	}
