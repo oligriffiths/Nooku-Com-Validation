@@ -28,13 +28,4 @@ interface ValidatorInterface
 	 * @return BOOL
 	 */
 	public function isValid($value);
-
-    /**
-     * Gets the message and replaces placeholders with their values
-     *
-     * @param null $value - value used to {{ value }} placeholder
-     * @param string $key - message key, for use with multiple messages
-     * @return mixed|null
-     */
-    public function getMessage($value = null, $key = 'message');
 }

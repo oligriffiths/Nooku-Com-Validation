@@ -72,9 +72,7 @@ abstract class ValidatorAbstract extends Library\Object implements ValidatorInte
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-            'message' => '{{message_target}} is not a valid {{type}}, "{{value}}" given',
-            'message_bad_type' => '{{message_target}} must be of type "{{value_type}}", "{{value}}" given',
-            'message_target' => 'This value',
+            'mixins' => array('com://oligriffiths/validation.mixin.message'),
             'allow_null' => false,
             'value_type' => 'scalar',
             'filter' => $this->getIdentifier()->name
@@ -215,37 +213,5 @@ abstract class ValidatorAbstract extends Library\Object implements ValidatorInte
         }
 
         return $this->_filter;
-    }
-
-
-    /**
-     * Gets the message and replaces placeholders with their values
-     * @param null $value - value used to {{ value }} placeholder
-     * @param string $key - message key, for use with multiple messages
-     * @return mixed|null
-     */
-    public function getMessage($value = null, $key = 'message')
-    {
-        $translator = $this->getObject('translator');
-        $message = $translator($this->getConfig()->$key);
-        $options = $this->getConfig();
-
-        //Get all the placeholders to replace
-        preg_match_all('#\{\{\s*([^\}]+)\s*\}\}#', $message, $matches);
-        foreach($matches[0] AS $k => $match){
-            $k = trim($matches[1][$k]);
-            if($k == 'target') $k = 'message_target';
-
-            if (is_array($value) && isset($value[$k])) $replace = $value[$k];
-            else if($k == 'value') $replace = $value;
-            else if($k == 'type') $replace = $this->getConfig()->type;
-            else $replace = $options->get($k);
-
-            if($replace instanceof Library\ObjectConfigInterface) $replace = implode(',', $replace->toArray());
-
-            $message = str_replace($match, $replace, $message);
-        }
-
-        return $message;
     }
 }
