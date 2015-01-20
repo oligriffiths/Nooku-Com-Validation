@@ -8,7 +8,7 @@ namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
 
-class FilterBlank extends Library\FilterAbstract
+class FilterBlank extends FilterAbstract
 {
 	/**
 	 * Validate the value is blank

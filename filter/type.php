@@ -11,7 +11,7 @@ use Nooku\Library;
  *
  * @package Oligriffiths\Component\Validation
  */
-class ValidatorType extends ValidatorAbstract
+class FilterType extends FilterAbstract
 {
     /**
      * Initializes the options for the object
@@ -24,49 +24,23 @@ class ValidatorType extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'filter' => false,
-            'type' => null,
-            'strict' => false,
+            'type' => null
 		));
+
 		parent::_initialize($config);
 	}
-
 
 	/**
 	 * Validate a value against the constraint
 	 *
 	 * @see ValidatorInterface::validate
 	 */
-	protected function _validate($value)
+	public function validate($value)
 	{
         $config = $this->getOptions();
-        
-		if(!$config->strict && is_string($value))
-		{
-			switch($config->type)
-			{
-				case 'long':
-				case 'integer':
-				case 'int':
-					if(null !== filter_var($value, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE)) return true;
-					break;
-
-				case 'real':
-				case 'double':
-				case 'float':
-					if(null !== filter_var($value, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE)) return true;
-					break;
-
-				case 'boolean':
-				case 'bool':
-                    if(null !== filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)) return true;
-					break;
-			}
-		}
 
         //Create function names
 		$type = strtolower($config->type);
-		$type = $type == 'boolean' ? 'bool' : $type;
 		$isFunction = 'is_'.$type;
 		$ctypeFunction = 'ctype_'.$type;
 

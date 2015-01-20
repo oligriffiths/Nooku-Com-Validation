@@ -10,13 +10,10 @@ namespace Oligriffiths\Component\Validation;
 use Nooku\Library;
 
 /**
- * Class ValidatorIdentifier
- *
- * Identifier validator. Ensures the passed identifier is valid. Can be object or string
- *
+ * Class ValidatorRange
  * @package Oligriffiths\Component\Validation
  */
-class ValidatorIdentifier extends ValidatorAbstract
+class FilterRange extends FilterAbstract
 {
     /**
      * Initializes the options for the object
@@ -29,33 +26,40 @@ class ValidatorIdentifier extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-            'message' => '{{message_target}} must be valid identifier, "{{value}}" given',
-            'value_type' => null,
-			'filter' => false
+            'min' => null,
+            'max' => null,
+            'value_type' => 'numeric'
 		));
 
 		parent::_initialize($config);
 	}
 
-
 	/**
-	 * Validate the value is an identifier
+	 * Validate a value
 	 *
 	 * @see ValidatorInterface::validate
 	 */
-	protected function _validate($value)
+	public function validate($value)
 	{
-        if($value instanceof Library\ObjectIdentifierInterface) return true;
+        $config = $this->getConfig();
 
-		if(!is_string($value) && !is_array($value)){
-			throw new \RuntimeException($this->getMessage($value));
+		$message = null;
+		if ($config->min == $config->max && $value != $config->min) {
+			$message = $this->getMessage($value, 'exact');
 		}
 
-		try{
-			$this->getIdentifier($value);
-			return true;
-		}catch(\Exception $e){
-			throw new \RuntimeException($this->getMessage($value));
+		if (null !== $config->max && $value > $config->max) {
+			$message = $this->getMessage($value, 'max');
 		}
+
+		if (null !== $config->min && $value < $config->min) {
+			$message = $this->getMessage($value, 'min');
+		}
+
+		if($message !== null){
+			throw new \RuntimeException($message);
+		}
+
+		return true;
 	}
 }

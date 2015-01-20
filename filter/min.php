@@ -8,7 +8,7 @@ namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
 
-class FilterMin extends Library\FilterAbstract
+class FilterMin extends FilterAbstract
 {
 	protected $_min;
 

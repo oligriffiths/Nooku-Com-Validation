@@ -9,15 +9,14 @@ namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
 
-
 /**
- * Class ValidatorNotnull
+ * Class ValidatorMd5
  *
- * Validates a value is not null
+ * MD5 string validator
  *
  * @package Oligriffiths\Component\Validation
  */
-class ValidatorNotnull extends ValidatorAbstract
+class FilterMd5 extends Library\FilterMd5
 {
     /**
      * Initializes the options for the object
@@ -30,9 +29,7 @@ class ValidatorNotnull extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'message' => '{{message_target}} must not be null',
-			'allow_null' => true,
-			'value_type' => null
+            'value_type' => 'string'
 		));
 
 		parent::_initialize($config);

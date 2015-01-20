@@ -11,17 +11,17 @@ use Nooku\Library;
  *
  * @package Oligriffiths\Component\Validation
  */
-class ValidatorUrl extends ValidatorAbstract
+class FilterUrl extends Library\FilterUrl
 {
 	/**
 	 * Validate the value is a url
 	 *
 	 * @see ValidatorInterface::validate
 	 */
-	protected function _validate($value)
+	public function validate($value)
 	{
 		if($value instanceof Library\HttpUrlInterface) $value = (string) $value;
 
-		return parent::_validate($value);
+		return parent::validate($value);
 	}
 }

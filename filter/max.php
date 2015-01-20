@@ -8,7 +8,7 @@ namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
 
-class FilterMax extends Library\FilterAbstract
+class FilterMax extends FilterAbstract
 {
 	protected $_max;
 

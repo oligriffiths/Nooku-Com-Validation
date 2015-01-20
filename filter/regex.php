@@ -8,7 +8,7 @@ namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
 
-class FilterRegex extends Library\FilterAbstract
+class FilterRegex extends FilterAbstract
 {
 	protected $_regex;
 

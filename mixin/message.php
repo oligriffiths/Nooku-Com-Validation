@@ -3,7 +3,6 @@
 namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
-use Nooku\Library\ObjectConfig;
 
 /**
  * Message Mixin
@@ -21,14 +20,13 @@ class MixinMessage extends Library\ObjectMixinAbstract
      *
      * @param ObjectConfig $config An optional ObjectConfig object with configuration options
      */
-    public function __construct(ObjectConfig $config)
+    public function __construct(Library\ObjectConfig $config)
     {
         parent::__construct($config);
 
         $this->_config = $config;
 
-        $translator = $this->getObject('translator');
-        if(!$translator->isLoaded('com://oligriffiths/validation')) $translator->load('com://oligriffiths/validation');
+        $this->loadTranslations();
     }
 
     /**
@@ -48,6 +46,19 @@ class MixinMessage extends Library\ObjectMixinAbstract
         ));
 
         parent::_initialize($config);
+    }
+
+    /**
+     * Loads the translation files
+     */
+    protected function loadTranslations()
+    {
+        static $loaded;
+
+        if(!$loaded){
+            $translator = $this->getObject('translator');
+            if(!$translator->isLoaded('com://oligriffiths/validation')) $loaded = $translator->load('com://oligriffiths/validation');
+        }
     }
 
     /**
@@ -81,8 +92,8 @@ class MixinMessage extends Library\ObjectMixinAbstract
 
         //If message key supplied, check config first, then loaded language file
         if($message_key){
-            $message_key = 'FILTER_ERROR_'.strtoupper($message_key);
-            $message = $translator->translate($options->$message_key ?: $message_key);
+            $key = 'FILTER_ERROR_'.strtoupper($message_key);
+            $message = $translator->translate($options->get('error_'.$message_key) ?: $key);
             if($message == $message_key) $message = null;
         }
 
@@ -125,22 +136,5 @@ class MixinMessage extends Library\ObjectMixinAbstract
         }
 
         return $string;
-    }
-
-    /**
-     * Performs validation on the filters, throws exception on error
-     *
-     * @param $value
-     * @return mixed
-     * @throws \RuntimeException
-     */
-    public function execute($value)
-    {
-        $success = $this->getMixer()->validate($value);
-        if(!$success){
-            throw new \RuntimeException($this->getMessage($value));
-        }
-
-        return $success;
     }
 }

@@ -8,7 +8,7 @@ namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
 
-class FilterChoice extends Library\FilterAbstract
+class FilterChoice extends FilterAbstract
 {
 	protected $_choices;
 
@@ -26,6 +26,7 @@ class FilterChoice extends Library\FilterAbstract
 		$config->append(array(
 			'choices' => array()
 		));
+
 		parent::_initialize($config);
 	}
 

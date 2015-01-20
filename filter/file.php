@@ -10,13 +10,13 @@ namespace Oligriffiths\Component\Validation;
 use Nooku\Library;
 
 /**
- * Class ValidatorFile
+ * Class FilterFile
  *
  * This file is a modified version of the Symphony file validator, part of the Symfony package. Credit goes to Bernhard Schussek <bschussek@gmail.com>
  *
  * @package Oligriffiths\Component\Validation
  */
-class ValidatorFile extends ValidatorAbstract
+class FilterFile extends FilterAbstract
 {
     /**
      * Initializes the options for the object
@@ -29,23 +29,9 @@ class ValidatorFile extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'filter' => false,
-            'value_type' => null,
-            'maxSize' => null,
-            'mimeTypes' => array(),
-            'notFoundMessage' => 'The file {{value}} could not be found',
-            'notReadableMessage' => 'The file {{value}} is not readable',
-            'maxSizeMessage' => 'The file is too large ({{size}} {{suffix}}). Allowed maximum size is {{limit}} {{suffix}}',
-            'mimeTypesMessage' => 'The mime type of the file is invalid ({{type}}). Allowed mime types are {{types}}',
-
-            'uploadIniSizeErrorMessage' => 'The file is too large. Allowed maximum size is {{limit}} {{suffix}}',
-            'uploadFormSizeErrorMessage' => 'The file is too large',
-            'uploadPartialErrorMessage' => 'The file was only partially uploaded',
-            'uploadNoFileErrorMessage' => 'No file was uploaded',
-            'uploadNoTmpDirErrorMessage' => 'No temporary folder was configured in php.ini',
-            'uploadCantWriteErrorMessage' => 'Cannot write temporary file to disk',
-            'uploadExtensionErrorMessage' => 'A PHP extension caused the upload to fail',
-            'uploadErrorMessage' => 'The file could not be uploaded',
+            'max_size' => null,
+            'mime_types' => array(),
+            'upload_max_size' => ini_get('upload_max_filesize')
 		));
 
 		parent::_initialize($config);
@@ -59,12 +45,8 @@ class ValidatorFile extends ValidatorAbstract
 	 * @return bool
 	 * @throws \RuntimeException
 	 */
-	protected function _validate($value)
+	public function validate($value)
 	{
-		if (null === $value || '' === $value) {
-			return;
-		}
-
 		$message = null;
         $config = $this->getConfig();
 
@@ -75,9 +57,9 @@ class ValidatorFile extends ValidatorAbstract
 			if($value->error){
 				switch ($value->error) {
 					case UPLOAD_ERR_INI_SIZE:
-						$uploadSize = ini_get('upload_max_filesize');
-
+						$uploadSize = $config->upload_max_size;
 						$uploadFormat = strtoupper(substr($uploadSize, -1, 1));
+
 						switch($uploadFormat){
 							case 'G': $upload = (float) substr($uploadSize, 0, -1) * 1024 * 1024 * 1024; break;
 							case 'M': $upload = (float) substr($uploadSize, 0, -1) * 1024 * 1024; break;
@@ -85,12 +67,12 @@ class ValidatorFile extends ValidatorAbstract
 							default: $upload = $uploadSize; $uploadFormat = ''; break;
 						}
 
-						$maxFormat = strtoupper(substr($config->maxSize, -1, 1));
+						$maxFormat = strtoupper(substr($config->max_size, -1, 1));
 						switch($maxFormat){
-							case 'G': $max = (float) substr($config->maxSize, 0, -1) * 1024 * 1024 * 1024; break;
-							case 'M': $max = (float) substr($config->maxSize, 0, -1) * 1024 * 1024; break;
-							case 'K': $max = (float) substr($config->maxSize, 0, -1) * 1024; break;
-							default: $max = $config->maxSize; $maxFormat = ''; break;
+							case 'G': $max = (float) substr($config->max_size, 0, -1) * 1024 * 1024 * 1024; break;
+							case 'M': $max = (float) substr($config->max_size, 0, -1) * 1024 * 1024; break;
+							case 'K': $max = (float) substr($config->max_size, 0, -1) * 1024; break;
+							default: $max = $config->max_size; $maxFormat = ''; break;
 						}
 
 						$max = $max ? min($upload, $max) : $upload;
@@ -105,66 +87,66 @@ class ValidatorFile extends ValidatorAbstract
 						$message = $this->getMessage(array(
 							'limit' => $max,
 							'suffix' => $format.'B',
-						), 'uploadIniSizeErrorMessage');
+						), 'upload_ini_size');
 						break;
 
 					case UPLOAD_ERR_FORM_SIZE:
-						$message = $config->uploadFormSizeErrorMessage;
+						$message = 'upload_form_size';
 						break;
 
 					case UPLOAD_ERR_PARTIAL:
-						$message = $config->uploadPartialErrorMessage;
+						$message = 'upload_partial';
 						break;
 
 					case UPLOAD_ERR_NO_FILE:
-						$message = $config->uploadNoFileErrorMessage;
+						$message = 'upload_no_file';
 						break;
 
 					case UPLOAD_ERR_NO_TMP_DIR:
-						$message = $config->uploadNoTmpDirErrorMessage;
+						$message = 'upload_no_tmp_dir';
 						break;
 
 					case UPLOAD_ERR_CANT_WRITE:
-						$message = $config->uploadCantWriteErrorMessage;
+						$message = 'upload_cant_write';
 						break;
 
 					case UPLOAD_ERR_EXTENSION:
-						$message = $config->uploadExtensionErrorMessage;
+						$message = 'upload_extension';
 						break;
 
 					default:
-						$message = $config->uploadErrorMessage;
+						$message = 'upload';
 						break;
 				}
 			}
 
 			if($message){
-				throw new \RuntimeException($message);
+				throw new \RuntimeException($this->getMessage($message));
 			}
 
 			return true;
 		}
 
 		if (!is_scalar($value) && !(is_object($value) && method_exists($value, '__toString'))) {
-			$message = $this->getMessage(array('value_type' => 'string', 'value' => gettype($value)), 'message_invalid');
+			$message = $this->getMessage(array('value_type' => 'string', 'value' => gettype($value)), 'invalid');
 			throw new \RuntimeException($message);
 		}
 
 		$path = (string) $value;
 		if (!is_file($path)) {
-			throw new \RuntimeException($this->getMessage($path, 'notFoundMessage'));
+			throw new \RuntimeException($this->getMessage($path, 'not_found'));
 			return;
 		}
 
 		if (!is_readable($path)) {
-			throw new \RuntimeException($this->getMessage($path, 'notReadableMessage'));
+			throw new \RuntimeException($this->getMessage($path, 'not_readable'));
 			return;
 		}
 
-		if ($config->maxSize) {
+		if ($config->max_size) {
 
-			$format = strtoupper(substr($config->maxSize, -1, 1));
-			$limit = (float) substr($config->maxSize, 0, -1);
+			$format = strtoupper(substr($config->max_size, -1, 1));
+			$limit = (float) substr($config->max_size, 0, -1);
 			switch($format){
 				case 'G':
 					$size = round(filesize($path) / 1024 / 1024 / 1024, 2);
@@ -176,7 +158,7 @@ class ValidatorFile extends ValidatorAbstract
 					$size = round(filesize($path) / 1024, 2);
 					break;
 				default:
-					$limit = $config->maxSize;
+					$limit = $config->max_size;
 					$format = '';
 					$size = filesize($path);
 					break;
@@ -188,17 +170,17 @@ class ValidatorFile extends ValidatorAbstract
 					'limit'   => $limit,
 					'suffix'  => $format.'B',
 					'file'    => $path,
-				), 'maxSizeMessage'));
+				), 'max_size'));
 			}
 		}
 
-		$mimeTypes = $config->mimeTypes->toArray();
-		if (count($mimeTypes)) {
+		$mime_types = $config->mime_types->toArray();
+		if (count($mime_types)) {
 
 			$mime = mime_content_type($value);
 			$valid = false;
 
-			foreach ($mimeTypes as $mimeType) {
+			foreach ($mime_types as $mimeType) {
 				if ($mimeType === $mime) {
 					$valid = true;
 					break;
@@ -215,9 +197,9 @@ class ValidatorFile extends ValidatorAbstract
 			if (false === $valid) {
 				throw new \RuntimeException($this->getMessage(array(
 					'type'    => '"'.$mime.'"',
-					'types'   => '"'.implode('", "', $mimeTypes) .'"',
+					'types'   => '"'.implode('", "', $mime_types) .'"',
 					'file'    => $path,
-				), 'mimeTypesMessage'));
+				), 'invalid_mime_type'));
 			}
 		}
 

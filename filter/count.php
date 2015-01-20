@@ -16,7 +16,7 @@ use Nooku\Library;
  *
  * @package Oligriffiths\Component\Validation
  */
-class ValidatorCount extends ValidatorAbstract
+class FilterCount extends FilterAbstract
 {
     /**
      * Initializes the options for the object
@@ -29,13 +29,8 @@ class ValidatorCount extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'filter' => false,
             'min' => null,
             'max' => null,
-            'message_exact' => 'This collection should contain exactly {{min}} elements, {{value}} given',
-            'message_min' => 'This collection should contain {{min}} elements or more, {{value}} given',
-            'message_max' => 'This collection should contain {{max}} elements or less, {{value}} given',
-            'value_type' => 'array'
 		));
 
 		parent::_initialize($config);
@@ -47,7 +42,7 @@ class ValidatorCount extends ValidatorAbstract
 	 *
 	 * @see ValidatorInterface::validate
 	 */
-	protected function _validate($value)
+	public function validate($value)
 	{
 		if (!is_array($value) && !$value instanceof \Countable) {
 			throw new \UnexpectedValueException('The value passed to '.__CLASS__.'::'.__FUNCTION__.' must be an array, or implement countable');
@@ -58,15 +53,15 @@ class ValidatorCount extends ValidatorAbstract
         $options = $this->getConfig();
 
 		if ($options->min == $options->max && $count != $options->min) {
-			$message = $this->getMessage($count, 'message_exact');
+			$message = $this->getMessage($count, 'exact');
 		}
 
 		if (null !== $options->max && $count > $options->max) {
-			$message = $this->getMessage($count, 'message_max');
+			$message = $this->getMessage($count, 'max');
 		}
 
 		if (null !== $options->min && $count < $options->min) {
-			$message = $this->getMessage($count, 'message_min');
+			$message = $this->getMessage($count, 'min');
 		}
 
 		if($message !== null){

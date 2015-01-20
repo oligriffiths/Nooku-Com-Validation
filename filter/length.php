@@ -18,7 +18,7 @@ use Nooku\Library;
  *
  * @package Oligriffiths\Component\Validation
  */
-class ValidatorLength extends ValidatorAbstract
+class FilterLength extends FilterAbstract
 {
     /**
      * Initializes the options for the object
@@ -31,14 +31,10 @@ class ValidatorLength extends ValidatorAbstract
 	protected function _initialize(Library\ObjectConfig $config)
 	{
 		$config->append(array(
-			'filter' => false,
-            'value_type' => 'string',
             'min' => 0,
             'max' => null,
-            'message_exact' => 'This value should contain exactly {{min}} characters, {{value}} given',
-            'message_min' => 'This value is too short. It should have {{min}} characters or more, {{value}} given',
-            'message_max' => 'This value is too long. It should have {{max}} characters or less, {{value}} given',
-            'charset' => 'UTF-8'
+            'charset' => 'UTF-8',
+            'value_type' => 'string'
 		));
 
 		parent::_initialize($config);
@@ -50,7 +46,7 @@ class ValidatorLength extends ValidatorAbstract
 	 *
 	 * @see ValidatorInterface::validate
 	 */
-	protected function _validate($value)
+	public function validate($value)
 	{
 		if (!is_scalar($value) && !(is_object($value) && method_exists($value, '__toString'))) {
 			throw new \UnexpectedValueException('The value passed to '.__CLASS__.'::'.__FUNCTION__.' must be scalar, or implement __toString');
@@ -68,15 +64,15 @@ class ValidatorLength extends ValidatorAbstract
 
 		$message = null;
 		if ($config->min == $config->max && $length != $config->min) {
-			$message = $this->getMessage($length, 'message_exact');
+			$message = $this->getMessage($length, 'exact');
 		}
 
 		if (null !== $config->max && $length > $config->max) {
-			$message = $this->getMessage($length, 'message_max');
+			$message = $this->getMessage($length, 'max');
 		}
 
 		if (null !== $config->min && $length < $config->min) {
-			$message = $this->getMessage($length, 'message_min');
+			$message = $this->getMessage($length, 'min');
 		}
 
 		if($message !== null){
