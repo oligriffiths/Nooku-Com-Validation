@@ -27,7 +27,8 @@ class MixinMessage extends Library\ObjectMixinAbstract
 
         $this->_config = $config;
 
-        $this->getObject('translator')->load('com://oligriffiths/validation');
+        $translator = $this->getObject('translator');
+        if(!$translator->isLoaded('com://oligriffiths/validation')) $translator->load('com://oligriffiths/validation');
     }
 
     /**
@@ -94,7 +95,6 @@ class MixinMessage extends Library\ObjectMixinAbstract
 
         return $this->_replaceParameters($message, $options);
     }
-
 
     /**
      * Handles parameter replacements, replaces %key% with appropriate value from $parameters
