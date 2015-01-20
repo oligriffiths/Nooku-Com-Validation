@@ -26,6 +26,8 @@ class MixinMessage extends Library\ObjectMixinAbstract
         parent::__construct($config);
 
         $this->_config = $config;
+
+        $this->getObject('translator')->load('com://oligriffiths/validation');
     }
 
     /**
@@ -63,7 +65,7 @@ class MixinMessage extends Library\ObjectMixinAbstract
      * @param string $message_key - message key, for use with multiple messages
      * @return string
      */
-    public function getMessage($values = array(), $message_key = 'message')
+    public function getMessage($values = array(), $message_key = null)
     {
         //Compile replacement options
         $options = clone $this->getMixer()->getConfig();
@@ -74,16 +76,43 @@ class MixinMessage extends Library\ObjectMixinAbstract
 
         //Translate the message
         $translator = $this->getObject('translator');
-        $message = $translator($options->$message_key);
+        $message = null;
 
+        //If message key supplied, check config first, then loaded language file
+        if($message_key){
+            $message_key = 'FILTER_ERROR_'.strtoupper($message_key);
+            $message = $translator->translate($options->$message_key ?: $message_key);
+            if($message == $message_key) $message = null;
+        }
+
+        //If no message, check for filter specific, then default message
+        if(!$message){
+            $message_key = 'FILTER_ERROR_'.strtoupper($options->type);
+            $message = $translator->translate($message_key);
+            $message = $message == $message_key ? $translator->translate('FILTER_ERROR_DEFAULT') : $message;
+        }
+
+        return $this->_replaceParameters($message, $options);
+    }
+
+
+    /**
+     * Handles parameter replacements, replaces %key% with appropriate value from $parameters
+     *
+     * @param string $string String
+     * @param array  $parameters A config object of parameters
+     * @return string String after replacing the parameters
+     */
+    protected function _replaceParameters($string, Library\ObjectConfigInterface $parameters)
+    {
         //Get all the placeholders to replace
-        preg_match_all('#\{\{\s*([^\}]+)\s*\}\}#', $message, $matches);
+        preg_match_all('#\%\s*([^\%]+)\s*\%#', $string, $matches);
         foreach($matches[0] AS $k => $match){
 
             $key = $matches[1][$k];
 
             //Find the replacement value
-            $replace = $options->get($key);
+            $replace = $parameters->get($key);
 
             //Convert ObjectConfigs to array
             if($replace instanceof Library\ObjectConfigInterface) $replace = $replace->toArray();
@@ -92,10 +121,10 @@ class MixinMessage extends Library\ObjectMixinAbstract
             if(is_array($replace)) $replace = implode(',', $replace);
 
             //Perform token replacement
-            $message = str_replace($match, $replace, $message);
+            $string = str_replace($match, $replace, $string);
         }
 
-        return $message;
+        return $string;
     }
 
     /**
