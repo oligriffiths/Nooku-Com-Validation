@@ -19,22 +19,9 @@ class FilterBase64 extends Library\FilterBase64
 	 * @return    bool    True when the variable is valid
 	 */
 	public function validate($value)
-	{
-		if(!parent::validate($value)) return false;
+    {
+        if (!parent::validate($value)) return false;
 
-		return base64_encode(base64_decode($value)) == $value;
-	}
-
-	/**
-	 * Sanitize the data, returns null
-	 *
-	 * Variable passed to this function will always be a scalar
-	 *
-	 * @param    scalar    Value to be sanitized
-	 * @return    mixed
-	 */
-	public function sanitize($value)
-	{
-		return null;
-	}
+        return base64_encode(base64_decode($value)) == $value;
+    }
 }
