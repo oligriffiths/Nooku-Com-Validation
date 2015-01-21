@@ -5,7 +5,7 @@ namespace Oligriffiths\Component\Validation;
 use Nooku\Library;
 
 
-class DecoratorValidator extends Library\ObjectDecorator
+class DecoratorValidator extends Library\ObjectDecorator implements Library\FilterInterface
 {
     protected $_errors = array();
 
@@ -70,5 +70,26 @@ class DecoratorValidator extends Library\ObjectDecorator
 
         //Skip the parent setDelegate as it throws an error if $delegate is no an instance of Library\Object
         return Library\ObjectDecoratorAbstract::setDelegate($delegate);
+    }
+
+    /**
+     * Sanitize a scalar
+     *
+     * @param   mixed   $value Value to be sanitized
+     * @return  mixed   The sanitized value
+     */
+    public function sanitize($value)
+    {
+        return $this->getDelegate()->sanitize($value);
+    }
+
+    /**
+     * Get the priority of the filter
+     *
+     * @return  integer The priority level
+     */
+    public function getPriority()
+    {
+        return $this->getDelegate()->getPriority();
     }
 }
