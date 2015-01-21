@@ -22,7 +22,7 @@ FILTER_ERROR_FALSE: %message_target% must be false, "%value%" given
 FILTER_ERROR_FILE_NOT_FOUNT: The file %value% could not be found
 FILTER_ERROR_FILE_NOT_READABLE: The file %value% is not readable
 FILTER_ERROR_FILE_MAX_SIZE: The file is too large (%size% %suffix%). Allowed maximum size is %limit% %suffix%
-FILTER_ERROR_FILE_INVALID_MIME_TYPE: The mime type of the file is invalid (%type%). Allowed mime types are %types%
+FILTER_ERROR_FILE_INVALID_MIME_TYPE: The mime type of the file is invalid (%mime_type%). Allowed mime types are %mime_types%
 FILTER_ERROR_FILE_UPLOAD_UPLOAD: The file could not be uploaded
 FILTER_ERROR_FILE_UPLOAD_INI_SIZE: The file is too large. Allowed maximum size is %limit% %suffix%
 FILTER_ERROR_FILE_UPLOAD_FORM_SIZE: The file is too large
@@ -32,10 +32,10 @@ FILTER_ERROR_FILE_UPLOAD_NO_TMP_DIR: No temporary folder was configured in php.i
 FILTER_ERROR_FILE_UPLOAD_CANT_WRITE: Cannot write temporary file to disk
 FILTER_ERROR_FILE_UPLOAD_EXTENSION: A PHP extension caused the upload to fail
 FILTER_ERROR_IMAGE_NO_SIZE: The size of the image could not be detected
-FILTER_ERROR_IMAGE_MAX_WIDTH: The image width is too big (% width %px). Allowed maximum width is % max_width %px
-FILTER_ERROR_IMAGE_MIN_WIDTH: The image width is too small (% width %px). Minimum width expected is % min_width %px
-FILTER_ERROR_IMAGE_MAX_HEIGHT: The image height is too big (% height %px). Allowed maximum height is % max_height %px
-FILTER_ERROR_IMAGE_MIN_HEIGHT: The image height is too small (% height %px). Minimum height expected is % min_height %px
+FILTER_ERROR_IMAGE_MAX_WIDTH: The image width is too big (%width%px). Allowed maximum width is %max_width%px
+FILTER_ERROR_IMAGE_MIN_WIDTH: The image width is too small (%width%px). Minimum width expected is %min_width%px
+FILTER_ERROR_IMAGE_MAX_HEIGHT: The image height is too big (%height%px). Allowed maximum height is %max_height%px
+FILTER_ERROR_IMAGE_MIN_HEIGHT: The image height is too small (% height %px). Minimum height expected is %min_height%px
 FILTER_ERROR_INTERNALURL: %message_target% must be valid internal url, "%value%" given
 FILTER_ERROR_IP: %message_target% is not a valid IP address, "%value%" given
 FILTER_ERROR_JSON: %message_target% must be a valid JSON string, "%value%" given

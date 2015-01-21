@@ -196,8 +196,8 @@ class FilterFile extends FilterAbstract
 
 			if (false === $valid) {
 				throw new \RuntimeException($this->getMessage(array(
-					'type'    => '"'.$mime.'"',
-					'types'   => '"'.implode('", "', $mime_types) .'"',
+					'mime_type'    => '"'.$mime.'"',
+					'mime_types'   => '"'.implode('", "', $mime_types) .'"',
 					'file'    => $path,
 				), 'invalid_mime_type'));
 			}

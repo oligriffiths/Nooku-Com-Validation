@@ -77,15 +77,11 @@ abstract class ValidatorTestAbstract extends \PHPUnit_Framework_TestCase
         foreach($values AS $value)
         {
             $message = null;
-            try{
-                $succeed = $filter->validate($value);
-            }catch(\Exception $e){
-                $succeed = false;
-                $message = $e->getMessage();
-            }
+            $succeed = $filter->validate($value);
+            $errors = implode(',', $filter->getErrors());
 
-            if($valid) $this->assertTrue($succeed, $message);
-            else $this->assertFalse($succeed, $message);
+            if($valid) $this->assertTrue($succeed, $errors);
+            else $this->assertFalse($succeed, $errors);
         }
     }
 
