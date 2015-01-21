@@ -4,10 +4,7 @@ namespace Oligriffiths\Component\Validation;
 
 use Nooku\Library;
 
-/**
- * Message Mixin
- *
- */
+
 class DecoratorValidator extends Library\ObjectDecorator
 {
     /**
@@ -21,6 +18,7 @@ class DecoratorValidator extends Library\ObjectDecorator
     {
         $success = $this->getDelegate()->validate($value);
         if(!$success){
+            $value = is_array($value) ? json_encode($value) : $value;
             throw new \RuntimeException($this->getDelegate()->getMessage($value));
         }
 
@@ -36,8 +34,10 @@ class DecoratorValidator extends Library\ObjectDecorator
      */
     public function setDelegate($delegate)
     {
+        //Unwrap the iterator filter so that arrays are validated as-is
+        if($delegate instanceof Library\FilterIterator) $delegate = $delegate->getDelegate();
+
         //Skip the parent setDelegate as it throws an error if $delegate is no an instance of Library\Object
         return Library\ObjectDecoratorAbstract::setDelegate($delegate);
     }
-
 }
