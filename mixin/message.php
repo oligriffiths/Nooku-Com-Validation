@@ -15,6 +15,8 @@ class MixinMessage extends Library\ObjectMixinAbstract
      */
     protected $_config;
 
+    protected $_translator;
+
     /**
      * Object constructor
      *
@@ -24,7 +26,7 @@ class MixinMessage extends Library\ObjectMixinAbstract
     {
         parent::__construct($config);
 
-        $this->_config = $config;
+        $this->_translator = $config->translator;
 
         $this->loadTranslations();
     }
@@ -34,18 +36,14 @@ class MixinMessage extends Library\ObjectMixinAbstract
      *
      * Called from {@link __construct()} as a first step of object instantiation.
      *
-     * @param   Library\ObjectConfig $object An optional ObjectConfig object with configuration options
-     * @return  void
+     * @param  ObjectConfig $config An optional ObjectConfig object with configuration options
+     * @return void
      */
     protected function _initialize(Library\ObjectConfig $config)
     {
         $config->append(array(
-            'message' => '{{target}} is not a valid {{type}}, "{{value}}" given',
-            'message_bad_type' => '{{target}} must be of type "{{value_type}}", "{{value}}" given',
-            'message_target' => 'This value',
+            'translator' => null,
         ));
-
-        parent::_initialize($config);
     }
 
     /**
@@ -56,25 +54,30 @@ class MixinMessage extends Library\ObjectMixinAbstract
         static $loaded;
 
         if(!$loaded){
-            $translator = $this->getObject('translator');
-            if(!$translator->isLoaded('com://oligriffiths/validation')) $loaded = $translator->load('com://oligriffiths/validation');
+            if(!$this->getTranslator()->isLoaded('com://oligriffiths/validation')){
+                $loaded = $this->getTranslator()->load('com://oligriffiths/validation');
+            }
         }
     }
 
     /**
-     * Gets the mixin config
-     *
-     * @return Library\ObjectConfig
+     * Lazy loads the translator
+     * @return Library\TranslatorInterface
      */
-    public function getConfig()
+    protected function getTranslator()
     {
-        return $this->_config;
+        if(!$this->_translator instanceof Library\TranslatorInterface){
+            $this->_translator = $this->getObject('translator');
+        }
+
+        return $this->_translator;
     }
 
     /**
      * Gets the message and replaces placeholders with their values
-     * @param null $values - values used to replace placeholders
-     * @param string $message_key - message key, for use with multiple messages
+     *
+     * @param array $values - values used to replace placeholders in the message string
+     * @param string $message_key - message key, allows selection of a different message
      * @return string
      */
     public function getMessage($values = array(), $message_key = null)
@@ -82,29 +85,40 @@ class MixinMessage extends Library\ObjectMixinAbstract
         //Compile replacement options
         $options = clone $this->getMixer()->getConfig();
         $options
-            ->append($this->getConfig())
             ->append(is_array($values) ? $values : array('value' => $values))
-            ->append(array('type' => $this->getMixer()->getIdentifier()->name));
+            ->append(array(
+                'type' => $this->getMixer()->getIdentifier()->name,
+                'message_target' => $this->getTranslation('MESSAGE_TARGET')
+            ));
 
         //Translate the message
-        $translator = $this->getObject('translator');
         $message = null;
 
-        //If message key supplied, check config first, then loaded language file
-        if($message_key){
-            $key = 'FILTER_ERROR_'.strtoupper($message_key);
-            $message = $translator->translate($options->get('error_'.$message_key) ?: $key);
-            if($message == $message_key) $message = null;
-        }
+        //If message key supplied check for specific message
+        if($message_key) $message = $this->getTranslation($message_key);
 
         //If no message, check for filter specific, then default message
-        if(!$message){
-            $message_key = 'FILTER_ERROR_'.strtoupper($options->type);
-            $message = $translator->translate($message_key);
-            $message = $message == $message_key ? $translator->translate('FILTER_ERROR_DEFAULT') : $message;
-        }
+        $message = $message ?: ($this->getTranslation($options->type) ?: $this->getTranslation('DEFAULT'));
 
+        //Perform string replacement
         return $this->_replaceParameters($message, $options);
+    }
+
+    /**
+     * Gets a translation from the translator, or null if none found
+     *
+     * @param $key - The translation key. A prefix of FILTER_ERROR_ is added and uppercased.
+     * @return null|string
+     */
+    protected function getTranslation($key)
+    {
+        $key = 'FILTER_ERROR_'.strtoupper($key);
+
+        //Ensure key exists, return null if not set
+        if(!$this->getTranslator()->getCatalogue()->has($key)) return null;
+
+        //Translate the key
+        return $this->getTranslator()->translate($key);
     }
 
     /**
@@ -118,21 +132,20 @@ class MixinMessage extends Library\ObjectMixinAbstract
     {
         //Get all the placeholders to replace
         preg_match_all('#\%\s*([^\%]+)\s*\%#', $string, $matches);
-        foreach($matches[0] AS $k => $match){
-
-            $key = $matches[1][$k];
+        foreach($matches[1] AS $k => $match){
 
             //Find the replacement value
-            $replace = $parameters->get($key);
+            $replace = $parameters->get($match);
 
             //Convert ObjectConfigs to array
             if($replace instanceof Library\ObjectConfigInterface) $replace = $replace->toArray();
 
-            //Convert arrays to string
-            if(is_array($replace)) $replace = implode(',', $replace);
+            //Convert arrays and objects to string
+            if(is_array($replace) && is_numeric(key(is_array($replace)))) $replace = implode(',',$replace);
+            else if(is_array($replace) || is_object($replace)) $replace = json_encode($replace);
 
             //Perform token replacement
-            $string = str_replace($match, $replace, $string);
+            $string = str_replace($matches[0][$k], $replace, $string);
         }
 
         return $string;
