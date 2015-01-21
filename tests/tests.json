@@ -1,6 +1,0 @@
-{
-    "alnum": ["123abc","!123abc"],
-    "alpha": ["abc","123abc"],
-    "ascii": ["abc 123 !@#","àèî"],
-    "base64": ["bXkgcGhyYXNl","bXkgcGhyYXNlabc"]
-}
