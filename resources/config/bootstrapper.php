@@ -33,6 +33,7 @@ return array(
         'com://oligriffiths/validation.filter.md5'          => array('mixins' => array('com://oligriffiths/validation.mixin.message'), 'decorators' => array('com://oligriffiths/validation.decorator.validator')),
         'com://oligriffiths/validation.filter.numeric'      => array('mixins' => array('com://oligriffiths/validation.mixin.message'), 'decorators' => array('com://oligriffiths/validation.decorator.validator')),
         'com://oligriffiths/validation.filter.path'         => array('mixins' => array('com://oligriffiths/validation.mixin.message'), 'decorators' => array('com://oligriffiths/validation.decorator.validator')),
+        'com://oligriffiths/validation.filter.raw'          => array('mixins' => array('com://oligriffiths/validation.mixin.message'), 'decorators' => array('com://oligriffiths/validation.decorator.validator')),
         'com://oligriffiths/validation.filter.sha1'         => array('mixins' => array('com://oligriffiths/validation.mixin.message'), 'decorators' => array('com://oligriffiths/validation.decorator.validator')),
         'com://oligriffiths/validation.filter.slug'         => array('mixins' => array('com://oligriffiths/validation.mixin.message'), 'decorators' => array('com://oligriffiths/validation.decorator.validator')),
         'com://oligriffiths/validation.filter.string'       => array('mixins' => array('com://oligriffiths/validation.mixin.message'), 'decorators' => array('com://oligriffiths/validation.decorator.validator')),

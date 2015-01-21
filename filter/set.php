@@ -101,8 +101,13 @@ class FilterSet extends Library\ObjectArray
         }
 
         //Add the filter to the chain
-        if($filter instanceof Library\FilterInterface) $chain->addFilter($filter);
-        else $chain->addFilters(array($filter => $params));
+        if($filter instanceof Library\FilterInterface) {
+            $chain->addFilter($filter);
+            if(!$filter->getConfig()->message_target) $filter->getConfig()->message_target = $key;
+        }else{
+            if(!isset($params['message_target'])) $params['message_target'] = $key;
+            $chain->addFilters(array($filter => $params));
+        }
 
         return $this;
     }
