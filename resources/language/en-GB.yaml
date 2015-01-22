@@ -4,51 +4,51 @@
 # @license    GNU GPLv3 <http://www.gnu.org/licenses/gpl.html>
 # @link       https://github.com/nooku/nooku-platform for the canonical source repository
 
-FILTER_ERROR_DEFAULT: %message_target% is not a valid %type%, "%value%" given
-FILTER_ERROR_MESSAGE_TARGET: This value
-FILTER_ERROR_ALNUM: %message_target% must be alphanumeric, "%value%" given
-FILTER_ERROR_ALPHA: %message_target% must be alphabetic, "%value%" given
-FILTER_ERROR_ASCII: %message_target% must be an ascii characters only, "%value%" given
-FILTER_ERROR_BASE64: %message_target% must be base64 encoded, "%value%" given
-FILTER_ERROR_BLANK: %message_target% must be blank, "%value%" given
-FILTER_ERROR_BOOLEAN: %message_target% must be a boolean, "%value%" given
-FILTER_ERROR_CHOICE: %message_target% is not a valid %type%, must be one of %choices%, "%value%" given
-FILTER_ERROR_COUNT_EXACT: %message_target% should contain exactly %min% elements, %value% given'
-FILTER_ERROR_COUNT_MIN: %message_target% should contain %min% elements or more, %value% given
-FILTER_ERROR_COUNT_MAX: %message_target% should contain %max% elements or less, %value% given
-FILTER_ERROR_DIRNAME: %message_target% must be valid directory name, "%value%" given
-FILTER_ERROR_EMAIL: %message_target% is not a valid email address, "%value%" given
-FILTER_ERROR_FALSE: %message_target% must be false, "%value%" given
-FILTER_ERROR_FILE_NOT_FOUNT: The file %value% could not be found
-FILTER_ERROR_FILE_NOT_READABLE: The file %value% is not readable
-FILTER_ERROR_FILE_MAX_SIZE: The file is too large (%size% %suffix%). Allowed maximum size is %limit% %suffix%
-FILTER_ERROR_FILE_INVALID_MIME_TYPE: The mime type of the file is invalid (%mime_type%). Allowed mime types are %mime_types%
-FILTER_ERROR_FILE_UPLOAD_UPLOAD: The file could not be uploaded
-FILTER_ERROR_FILE_UPLOAD_INI_SIZE: The file is too large. Allowed maximum size is %limit% %suffix%
-FILTER_ERROR_FILE_UPLOAD_FORM_SIZE: The file is too large
-FILTER_ERROR_FILE_UPLOAD_PARTIAL: The file was only partially uploaded
-FILTER_ERROR_FILE_UPLOAD_NO_FILE: No file was uploaded
-FILTER_ERROR_FILE_UPLOAD_NO_TMP_DIR: No temporary folder was configured in php.ini
-FILTER_ERROR_FILE_UPLOAD_CANT_WRITE: Cannot write temporary file to disk
-FILTER_ERROR_FILE_UPLOAD_EXTENSION: A PHP extension caused the upload to fail
-FILTER_ERROR_IMAGE_NO_SIZE: The size of the image could not be detected
-FILTER_ERROR_IMAGE_MAX_WIDTH: The image width is too big (%width%px). Allowed maximum width is %max_width%px
-FILTER_ERROR_IMAGE_MIN_WIDTH: The image width is too small (%width%px). Minimum width expected is %min_width%px
-FILTER_ERROR_IMAGE_MAX_HEIGHT: The image height is too big (%height%px). Allowed maximum height is %max_height%px
-FILTER_ERROR_IMAGE_MIN_HEIGHT: The image height is too small (% height %px). Minimum height expected is %min_height%px
-FILTER_ERROR_INTERNALURL: %message_target% must be valid internal url, "%value%" given
-FILTER_ERROR_IP: %message_target% is not a valid IP address, "%value%" given
-FILTER_ERROR_JSON: %message_target% must be a valid JSON string, "%value%" given
-FILTER_ERROR_LENGTH_EXACT: %message_target% should contain exactly %min% characters, %value% given
-FILTER_ERROR_LENGTH_MIN: %message_target% is too short. It should have %min% characters or more, %value% given
-FILTER_ERROR_LENGTH_MAX: %message_target% is too long. It should have %max% characters or less, %value% given
-FILTER_ERROR_MAX: %message_target% should be %max% or less, "%value%" given
-FILTER_ERROR_MD5: %message_target% must be a valid MD5 hash, "%value%" given
-FILTER_ERROR_MIN: %message_target% should be %min% or more, "%value%" given
-FILTER_ERROR_NULL: %message_target% must be null
-FILTER_ERROR_RANGE_EXACT: %message_target% should be exactly %min%, %value% given
-FILTER_ERROR_RANGE_MIN: %message_target% should be %min% or more, %value% given
-FILTER_ERROR_RANGE_MAX: %message_target% should be %max% or less, %value% given
-FILTER_ERROR_REGEX: %message_target% does not validate against the regular expression "%regex%", "%value%" given
-FILTER_ERROR_REQUIRED: %message_target% is required
-FILTER_ERROR_TRUE: %message_target% must be true, "%value%" given
+FILTER_ERROR_DEFAULT: "{message_target} is not a valid {type}, '{value}' given"
+FILTER_ERROR_MESSAGE_TARGET: "This value"
+FILTER_ERROR_ALNUM: "{message_target} must be alphanumeric, '{value}' given"
+FILTER_ERROR_ALPHA: "{message_target} must be alphabetic, '{value}' given"
+FILTER_ERROR_ASCII: "{message_target} must be an ascii characters only, '{value}' given"
+FILTER_ERROR_BASE64: "{message_target} must be base64 encoded, '{value}' given"
+FILTER_ERROR_BLANK: "{message_target} must be blank, '{value}' given"
+FILTER_ERROR_BOOLEAN: "{message_target} must be a boolean, '{value}' given"
+FILTER_ERROR_CHOICE: "{message_target} is not a valid {type}, must be one of {choices}, '{value}' given"
+FILTER_ERROR_COUNT_EXACT: "{message_target} should contain exactly {min} elements, {value} given'"
+FILTER_ERROR_COUNT_MIN: "{message_target} should contain {min} elements or more, {value} given"
+FILTER_ERROR_COUNT_MAX: "{message_target} should contain {max} elements or less, {value} given"
+FILTER_ERROR_DIRNAME: "{message_target} must be valid directory name, '{value}' given"
+FILTER_ERROR_EMAIL: "{message_target} is not a valid email address, '{value}' given"
+FILTER_ERROR_FALSE: "{message_target} must be false, '{value}' given"
+FILTER_ERROR_FILE_NOT_FOUNT: "The file {value} could not be found"
+FILTER_ERROR_FILE_NOT_READABLE: "The file {value} is not readable"
+FILTER_ERROR_FILE_MAX_SIZE: "The file is too large ({size} {suffix}). Allowed maximum size is {limit} {suffix}"
+FILTER_ERROR_FILE_INVALID_MIME_TYPE: "The mime type of the file is invalid ({mime_type}). Allowed mime types are {mime_types}"
+FILTER_ERROR_FILE_UPLOAD_UPLOAD: "The file could not be uploaded"
+FILTER_ERROR_FILE_UPLOAD_INI_SIZE: "The file is too large. Allowed maximum size is {limit} {suffix}"
+FILTER_ERROR_FILE_UPLOAD_FORM_SIZE: "The file is too large"
+FILTER_ERROR_FILE_UPLOAD_PARTIAL: "The file was only partially uploaded"
+FILTER_ERROR_FILE_UPLOAD_NO_FILE: "No file was uploaded"
+FILTER_ERROR_FILE_UPLOAD_NO_TMP_DIR: "No temporary folder was configured in php.ini"
+FILTER_ERROR_FILE_UPLOAD_CANT_WRITE: "Cannot write temporary file to disk"
+FILTER_ERROR_FILE_UPLOAD_EXTENSION: "A PHP extension caused the upload to fail"
+FILTER_ERROR_IMAGE_NO_SIZE: "The size of the image could not be detected"
+FILTER_ERROR_IMAGE_MAX_WIDTH: "The image width is too big ({width}px). Allowed maximum width is {max_width}px"
+FILTER_ERROR_IMAGE_MIN_WIDTH: "The image width is too small ({width}px). Minimum width expected is {min_width}px"
+FILTER_ERROR_IMAGE_MAX_HEIGHT: "The image height is too big ({height}px). Allowed maximum height is {max_height}px"
+FILTER_ERROR_IMAGE_MIN_HEIGHT: "The image height is too small (} height {px). Minimum height expected is {min_height}px"
+FILTER_ERROR_INTERNALURL: "{message_target} must be valid internal url, '{value}' given"
+FILTER_ERROR_IP: "{message_target} is not a valid IP address, '{value}' given"
+FILTER_ERROR_JSON: "{message_target} must be a valid JSON string, '{value}' given"
+FILTER_ERROR_LENGTH_EXACT: "{message_target} should contain exactly {min} characters, {value} given"
+FILTER_ERROR_LENGTH_MIN: "{message_target} is too short. It should have {min} characters or more, {value} given"
+FILTER_ERROR_LENGTH_MAX: "{message_target} is too long. It should have {max} characters or less, {value} given"
+FILTER_ERROR_MAX: "{message_target} should be {max} or less, '{value}' given"
+FILTER_ERROR_MD5: "{message_target} must be a valid MD5 hash, '{value}' given"
+FILTER_ERROR_MIN: "{message_target} should be {min} or more, '{value}' given"
+FILTER_ERROR_NULL: "{message_target} must be null"
+FILTER_ERROR_RANGE_EXACT: "{message_target} should be exactly {min}, {value} given"
+FILTER_ERROR_RANGE_MIN: "{message_target} should be {min} or more, {value} given"
+FILTER_ERROR_RANGE_MAX: "{message_target} should be {max} or less, {value} given"
+FILTER_ERROR_REGEX: "{message_target} does not validate against the regular expression '{regex}', '{value}' given"
+FILTER_ERROR_REQUIRED: "{message_target} is required"
+FILTER_ERROR_TRUE: "{message_target} must be true, '{value}' given"

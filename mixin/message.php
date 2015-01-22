@@ -131,7 +131,7 @@ class MixinMessage extends Library\ObjectMixinAbstract
     protected function _replaceParameters($string, Library\ObjectConfigInterface $parameters)
     {
         //Get all the placeholders to replace
-        preg_match_all('#\%\s*([^\%]+)\s*\%#', $string, $matches);
+        preg_match_all('#\{\s*([^\}]+)\s*\}#', $string, $matches);
         foreach($matches[1] AS $k => $match){
 
             //Find the replacement value
