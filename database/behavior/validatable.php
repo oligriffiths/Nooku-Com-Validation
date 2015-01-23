@@ -39,17 +39,18 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
             $this->_filter_set = $config->filter_set;
         }
 
-        $filter_columns = $config->filters->toArray();
+        $columns = $config->columns->toArray();
+        $filters = $config->filters->toArray();
 
         //Load DB validator
-        if($config->load_db_schema){
-            $this->loadFromSchema(array_keys($filter_columns));
+        if($config->load_db_schema || count($columns)){
+            $this->loadFromSchema($columns, array_keys($filters));
         }
 
         //Load passed validators
-        foreach($filter_columns AS $column => $filters)
+        foreach($filters AS $column => $column_filters)
         {
-            foreach($filters AS $key => $filter){
+            foreach($column_filters AS $key => $filter){
                 $options = array();
                 if(is_array($key)){
                     $options = $filter;
@@ -59,7 +60,6 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
             }
         }
     }
-
 
     /**
      * Initializes the options for the object
@@ -73,7 +73,7 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     {
         $config->append(array(
             'load_db_schema' => true,
-            'table_filter' => true,
+            'columns' => array(),
             'filters' => array(),
             'filter_set' => null,
             'priority'   => self::PRIORITY_LOWEST //Ensure this runs last so all other behaviors run that might affect the object data
@@ -81,7 +81,6 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 
         parent::_initialize($config);
     }
-
 
     /**
      * Only instances of ObjectArray are supported
@@ -94,7 +93,6 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
         return $entity instanceof Library\DatabaseTableInterface || $entity instanceof Library\ObjectArray;
     }
 
-
     /**
      * Before inserting data, validate it first
      *
@@ -105,7 +103,6 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     {
         return $this->_beforeUpdate($context);
     }
-
 
     /**
      * Before updating data, validate it first
@@ -119,7 +116,18 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
         {
             if(!$context->data->validate())
             {
-                return false;
+                //Produce error message
+                $text = '';
+                foreach($this->getValidationErrors() AS $errors) {
+                    foreach($errors AS $e) {
+                        $text .= 'Validation error: '.$e."<br />\n";
+                    }
+                }
+
+                //Set failed state
+                $context->data->setStatus(Library\ModelEntityInterface::STATUS_FAILED);
+
+                throw new \RuntimeException($text);
             }
 
             return true;
@@ -185,24 +193,20 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     /**
      * @return mixed
      */
-    public function validate()
+    public function validate(FilterSet $filter_set = null)
     {
         $entity = $this->getMixer();
-
         $hash = spl_object_hash($entity);
+
+        //Define the filter set being used
+        $filter_set = $filter_set ?: $this->_filter_set;
 
         //Initialize the errors holder
         $this->_errors[$hash] = array();
 
         //Grab the data that's to be validated
         $data = $entity->toArray();
-        $data = array_intersect_key($data, $this->_filter_set->toArray());
-
-        // Filter data based on column type
-        if($this->getConfig()->table_filter && $entity instanceof Library\DatabaseRowAbstract){
-            $table = $entity->getTable();
-            $data = $table->filter($data);
-        }
+        $data = array_intersect_key($data, $filter_set->toArray());
 
         //Filter to remove null data non-required data and convert objects to strings
         $data = array_filter($data, function(&$value, $key){
@@ -210,24 +214,17 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
             //If required is not set and value is null, skip
             if(!$this->isRequired($key) && $value === null) return false;
 
-            //If value is an object, convert to string
-            if(is_object($value) && method_exists($value, '__toString')) $value = (string) $value;
-
             return true;
         }, ARRAY_FILTER_USE_BOTH);
 
         //Validate the data
-        if($this->_filter_set->validate($data)) return true;
+        if($filter_set->validate($data)) return true;
 
         //Store the errors
-        $this->_errors[$hash] = $errors = $this->_filter_set->getErrors();
-
-        //Set failed state
-        $entity->setStatus(Library\ModelEntityInterface::STATUS_FAILED);
+        $this->_errors[$hash] = $errors = $filter_set->getErrors();
 
         return false;
     }
-
 
     /**
      * Returns the validation errors for a specific key, or all errors if no key suppied
@@ -245,7 +242,6 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 
         return isset($this->_errors[$hash][$key]) ? (array) $this->_errors[$hash][$key] : array();
     }
-
 
     /**
      * Clears any cached validation messages for the object
@@ -296,13 +292,18 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
      *
      * @return mixed
      */
-    protected function loadFromSchema($exclude = array())
+    protected function loadFromSchema($include = array(), $exclude = array())
     {
         $mixer = $this->getMixer();
         $columns = $mixer->getColumns();
-        foreach($columns AS $name => $column)
-        {
-            if($column->primary || in_array($name, $exclude)) continue;
+
+        //Eliminate unneeded columns
+        if(count($include)) $columns = array_intersect_key($columns, array_flip($include));
+        if(count($exclude)) $columns = array_diff_key($columns, array_flip($exclude));
+
+        foreach($columns AS $name => $column) {
+
+            if($column->primary) continue;
 
             $filters = array();
 
@@ -336,7 +337,6 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
                 case 'bit':
                 case 'bool':
                 case 'boolean':
-                    $required_type = 'notnull'; //booleans can be 0, notblank fails on this
                     $filters['boolean'] = array();
                     break;
 
