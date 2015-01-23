@@ -15,8 +15,6 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
      */
     protected $_filter_set;
 
-    protected $_isValid = array();
-
     /**
      * @var array
      */
@@ -191,7 +189,10 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     }
 
     /**
-     * @return mixed
+     * Validates the entity data against the filter set
+     *
+     * @param FilterSet $filter_set - Optional filter set to validate against
+     * @return bool
      */
     public function validate(FilterSet $filter_set = null)
     {
@@ -227,7 +228,8 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     }
 
     /**
-     * Returns the validation errors for a specific key, or all errors if no key suppied
+     * Returns the validation errors for a specific key, or all errors if no key supplied
+     *
      * @param null $key
      * @param bool $clear
      * @return array
@@ -245,6 +247,7 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 
     /**
      * Clears any cached validation messages for the object
+     *
      * @param null $key - clear the errors for a specific key or null to clear all
      * @return $this
      * @throws \UnexpectedValueException
@@ -263,6 +266,7 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 
     /**
      * Checks if the required validator is set
+     *
      * @param $column
      * @return bool
      */
@@ -273,6 +277,7 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 
     /**
      * Checks if a validator is set
+     *
      * @param $validator
      * @param $column
      * @return bool
