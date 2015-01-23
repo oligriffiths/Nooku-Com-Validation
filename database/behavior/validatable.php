@@ -10,7 +10,10 @@ use Nooku\Library;
 
 class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
 {
-    protected $_validators = array();
+    /**
+     * @var FilterSet
+     */
+    protected $_filter_set;
 
     protected $_isValid = array();
 
@@ -29,21 +32,30 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     {
         parent::__construct($config);
 
+        //Store filter set instance
+        if(!$config->filter_set instanceof FilterSet){
+            $this->_filter_set = $this->getObject('com://oligriffiths/validation.filter.set');
+        }else{
+            $this->_filter_set = $config->filter_set;
+        }
+
+        $filter_columns = $config->filters->toArray();
+
         //Load DB validator
         if($config->load_db_schema){
-            $this->loadFromSchema(array_keys($config->validators->toArray()));
+            $this->loadFromSchema(array_keys($filter_columns));
         }
 
         //Load passed validators
-        foreach($config->validators->toArray() AS $column => $validators)
+        foreach($filter_columns AS $column => $filters)
         {
-            foreach($validators AS $key => $validator){
+            foreach($filters AS $key => $filter){
                 $options = array();
                 if(is_array($key)){
-                    $options = $validator;
-                    $validator = $key;
+                    $options = $filter;
+                    $filter = $key;
                 }
-                $this->addValidator($column, $validator, $options);
+                $this->addFilter($column, $filter, $options);
             }
         }
     }
@@ -62,7 +74,8 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
         $config->append(array(
             'load_db_schema' => true,
             'table_filter' => true,
-            'validators' => array(),
+            'filters' => array(),
+            'filter_set' => null,
             'priority'   => self::PRIORITY_LOWEST //Ensure this runs last so all other behaviors run that might affect the object data
         ));
 
@@ -119,36 +132,55 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
      ***********/
 
     /**
+     * Adds a filter to the specified column
+     *
      * @param $column - the column name
-     * @param $$validator - the validator name or identifier
+     * @param $validator - the validator name or identifier
      * @param array $options
      * @return DatabaseBehaviorValidatable
      */
-    public function addValidator($column, $validator, $options = array())
+    public function addFilter($column, $filter, $options = array())
     {
-        if(!isset($this->_validators[$column])){
-            $this->_validators[$column] = $this->getObject('com:validation.validator.set');
-        }
-
         if(!isset($options['message_target'])) $options['message_target'] = ucfirst($column);
 
-        $this->_validators[$column]->addValidator($validator, $options);
+        $this->_filter_set->addFilter($column, $filter, $options);
 
         return $this;
     }
 
+    /**
+     * Adds an array of filters to the specified column
+     *
+     * @param $column - the column name
+     * @param $$alidator - the validator name or identifier
+     * @param array $options
+     * @return DatabaseBehaviorValidatable
+     */
+    public function addFilters($column, array $filters)
+    {
+        foreach($filters AS $key => $filter){
+            $params = array();
+            if(is_array($filter)){
+                $params = $filter;
+                $filter = $key;
+            }
+
+            $this->addFilter($column, $filter, $params);
+        }
+
+        return $this;
+    }
 
     /**
      * Returns the validators
      *
      * @param null $column - specific column
-     * @return array
+     * @return FilterChain
      */
-    public function getValidators($column = null)
+    public function getFilters($column = null)
     {
-        return $column ? (isset($this->_validators[$column]) ? $this->_validators[$column] : array()) : $this->_validators;
+        return $column ? (isset($this->_filter_set[$column]) ? $this->_filter_set[$column] : null) : $this->_filter_set;
     }
-
 
     /**
      * @return mixed
@@ -162,52 +194,38 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
         //Initialize the errors holder
         $this->_errors[$hash] = array();
 
-        //Get the validator set
-        $set = $this->getObject('com://oligriffiths/validation.validator.set', array('validators' => $this->getValidators()));
-
-        //Filter the data
+        //Grab the data that's to be validated
         $data = $entity->toArray();
+        $data = array_intersect_key($data, $this->_filter_set->toArray());
 
-        //Filter the entity data
-        if($this->getConfig()->table_filter && $entity instanceof Library\DatabaseRowInterface){
-
+        // Filter data based on column type
+        if($this->getConfig()->table_filter && $entity instanceof Library\DatabaseRowAbstract){
             $table = $entity->getTable();
-
-            // Filter data based on column type
-            foreach($data as $key => $value){
-
-                //Filter column
-                if($column = $table->getColumn($key)) {
-                    if ($column->filter) {
-                        $data[$key] = $this->getObject('filter.factory')->createChain($column->filter)->sanitize($value);
-                    }
-                }
-
-                //Do string conversion for any object that has a toString
-                if(is_object($data[$key]) && method_exists($data[$key], '__toString')) $data[$key] = (string) $data[$key];
-            }
+            $data = $table->filter($data);
         }
+
+        //Filter to remove null data non-required data and convert objects to strings
+        $data = array_filter($data, function(&$value, $key){
+
+            //If required is not set and value is null, skip
+            if(!$this->isRequired($key) && $value === null) return false;
+
+            //If value is an object, convert to string
+            if(is_object($value) && method_exists($value, '__toString')) $value = (string) $value;
+
+            return true;
+        }, ARRAY_FILTER_USE_BOTH);
 
         //Validate the data
-        $result = $set->validate($data);
-        $errors = $set->getErrors();
+        if($this->_filter_set->validate($data)) return true;
 
         //Store the errors
-        $this->_errors[$hash] = $errors;
+        $this->_errors[$hash] = $errors = $this->_filter_set->getErrors();
 
-        //If success, return
-        if($result) return true;
+        //Set failed state
+        $entity->setStatus(Library\ModelEntityInterface::STATUS_FAILED);
 
-        $text = '';
-        foreach($errors AS $error)
-        {
-            foreach($error AS $e)
-            {
-                $text .= 'Validation error: '.$e."<br />\n";
-            }
-        }
-
-        throw new \RuntimeException($text);
+        return false;
     }
 
 
@@ -247,7 +265,6 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
         return $this;
     }
 
-
     /**
      * Checks if the required validator is set
      * @param $column
@@ -255,9 +272,8 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
      */
     public function isRequired($column)
     {
-        return $this->hasValidator('required',$column);
+        return $this->hasFilter($column, 'required');
     }
-
 
     /**
      * Checks if a validator is set
@@ -265,15 +281,12 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
      * @param $column
      * @return bool
      */
-    public function hasValidator($validator, $column)
+    public function hasFilter($column, $filter)
     {
-        $validators = $this->getValidator($column);
-        if($validator == 'required'){
-            return isset($validators['required']) || isset($validators['notblank']) || isset($validators['notnull']);
-        }
-        return isset($validators[$validator]);
-    }
+        $chain = $this->getFilters($column);
 
+        return $chain && $chain->hasFilter($filter);
+    }
 
     /**
      * Load validators from the database schema.
@@ -291,17 +304,16 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
         {
             if($column->primary || in_array($name, $exclude)) continue;
 
-            $validator_set = array();
+            $filters = array();
 
-            $required_type = 'required';
-            if($column->name == 'email' || $column->name == 'email_address') $validator_set['email'] = array();
-            if($column->name == 'ip' || $column->name == 'ip_address') $validator_set['ip'] = array();
+            if($column->name == 'email' || $column->name == 'email_address') $filters['email'] = array();
+            if($column->name == 'ip' || $column->name == 'ip_address') $filters['ip'] = array();
 
             switch($column->type)
             {
-                case 'date':        $validator_set['date'] = array('allow_zeros' => !$column->required); break;
-                case 'datetime':    $validator_set['timestamp'] = array('allow_zeros' => !$column->required); break;
-                case 'time':        $validator_set['time'] = array('allow_zeros' => !$column->required); break;
+                case 'date':        $filters['date'] = array('allow_zeros' => !$column->required); break;
+                case 'datetime':    $filters['timestamp'] = array('allow_zeros' => !$column->required); break;
+                case 'time':        $filters['time'] = array('allow_zeros' => !$column->required); break;
 
                 case 'int':
                 case 'integer':
@@ -309,8 +321,8 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
                 case 'smallint':
                 case 'mediumint':
                 case 'bigint':
-                    if($column->type == 'tinyint' && $column->length == 1) $validator_set['boolean'] = array();
-                    else $validator_set['int'] = array();
+                    if($column->type == 'tinyint' && $column->length == 1) $filters['boolean'] = array();
+                    else $filters['int'] = array();
                     break;
 
                 case 'float':
@@ -318,14 +330,14 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
                 case 'real':
                 case 'double':
                 case 'double precision':
-                    $validator_set['float'] = array();
+                    $filters['float'] = array();
                     break;
 
                 case 'bit':
                 case 'bool':
                 case 'boolean':
                     $required_type = 'notnull'; //booleans can be 0, notblank fails on this
-                    $validator_set['boolean'] = array();
+                    $filters['boolean'] = array();
                     break;
 
                 case 'varchar':
@@ -337,17 +349,15 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
                 case 'tinyblob':
                 case 'smallblob':
                 case 'longblob':
-                    $validator_set['string'] = array();
+                    $filters['string'] = array();
                     break;
             }
 
-            if($column->required) $validator_set[$required_type] = array();
+            if($column->length) $filters['length'] = array('max' => $column->length);
 
-            if($column->length) $validator_set['length'] = array('max' => $column->length);
+            if($column->required) $filters['required'] = array();
 
-            foreach($validator_set AS $validator => $options){
-                $this->addValidator($name, $validator, $options);
-            }
+            if(count($filters)) $this->addFilters($name, $filters);
         }
 
         return $this;

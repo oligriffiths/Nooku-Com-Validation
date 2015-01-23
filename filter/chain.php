@@ -65,6 +65,30 @@ class FilterChain extends Library\FilterChain
     }
 
     /**
+     * Checks if a filter is in the queue
+     *
+     * @param string | Library\ObjectHandlable | Library\ObjectIdentifierInterface $filter
+     * @return bool
+     */
+    public function hasFilter($filter)
+    {
+        //If filter is an instance of ObjectHandleable, check if the object is in the queue
+        if($filter instanceof Library\ObjectHandlable){
+            return $this->_queue->contains($filter);
+        }
+
+        //Convert string to identifier
+        if(is_string($filter) && strpos($filter, '.') === false){
+            $identifier = $this->getIdentifier()->toArray();
+            $identifier['name'] = $filter;
+            $filter = $identifier;
+        }
+
+        //If filter is an identifier, check for identifier in the queue
+        return $this->_queue->hasIdentifier($filter);
+    }
+
+    /**
      * Returns the number of filters in the chain
      *
      * @return int
@@ -72,5 +96,15 @@ class FilterChain extends Library\FilterChain
     public function count()
     {
         return $this->_queue->count();
+    }
+
+    /**
+     * Returns an array of filters
+     *
+     * @return array
+     */
+    public function getFilters()
+    {
+        return $this->_queue->toArray();
     }
 }

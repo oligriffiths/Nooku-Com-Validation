@@ -41,7 +41,7 @@ class FilterRequired extends FilterBlank
 		if($this->getConfig()->strict){
             return $value !== null && $value !== '' && $value !== 0;
         }else{
-            return $value != null;
+            return $value !== null;
         }
 	}
 

@@ -160,11 +160,11 @@ class FilterSet extends Library\ObjectArray
 
         foreach($data AS $key => $value) {
 
-            if($filter = $this->offsetGet($key)) {
+            if($chain = $this->offsetGet($key)) {
 
-                if(!$filter->validate($value)){
+                if(!$chain->validate($value)){
                     $valid = false;
-                    $this->_errors[$key] = $filter->getErrors();
+                    $this->_errors[$key] = $chain->getErrors();
                 }
             }
         }

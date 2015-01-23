@@ -141,7 +141,7 @@ class MixinMessage extends Library\ObjectMixinAbstract
             if($replace instanceof Library\ObjectConfigInterface) $replace = $replace->toArray();
 
             //Convert arrays and objects to string
-            if(is_array($replace) && is_numeric(key(is_array($replace)))) $replace = implode(',',$replace);
+            if(is_array($replace) && is_numeric(key($replace))) $replace = implode(',',$replace);
             else if(is_array($replace) || is_object($replace)) $replace = json_encode($replace);
 
             //Perform token replacement
