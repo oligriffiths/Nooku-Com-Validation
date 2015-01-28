@@ -241,6 +241,7 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     {
         $entity = $this->getMixer();
         $hash = spl_object_hash($entity);
+
         if(!isset($this->_errors[$hash])) return array();
 
         if(!$key) return $this->_errors[$hash];
@@ -259,6 +260,7 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
     {
         $entity = $this->getMixer();
         $hash = spl_object_hash($entity);
+        
         if(!isset($this->_errors[$hash])) return $this;
 
         if(!$key) $this->_errors[$hash] = array();
