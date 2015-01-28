@@ -118,14 +118,17 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
                 $text = '';
                 foreach($this->getValidationErrors() AS $errors) {
                     foreach($errors AS $e) {
-                        $text .= 'Validation error: '.$e."<br />\n";
+                        $text .= 'Validation error: '.$e."\n";
                     }
                 }
 
                 //Set failed state
                 $context->data->setStatus(Library\ModelEntityInterface::STATUS_FAILED);
 
-                throw new \RuntimeException($text);
+                //Set status message
+                $context->data->setStatusMessage($text);
+
+                return false;
             }
 
             return true;
@@ -209,7 +212,7 @@ class DatabaseBehaviorValidatable extends Library\DatabaseBehaviorAbstract
         $data = $entity->toArray();
         $data = array_intersect_key($data, $filter_set->toArray());
 
-        //Filter to remove null data non-required data and convert objects to strings
+        //Filter to remove null non-required data
         $data = array_filter($data, function(&$value, $key){
 
             //If required is not set and value is null, skip
